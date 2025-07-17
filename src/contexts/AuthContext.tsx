@@ -14,6 +14,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, userData: any) => Promise<{ error: any }>
   signOut: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>
+  promoteToSuperAdmin: (email: string) => Promise<{ error: any }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -33,21 +34,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id)
-      } else {
-        setLoading(false)
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Error getting session:', error)
+          if (mounted) {
+            setLoading(false)
+          }
+          return
+        }
+
+        if (mounted) {
+          setSession(session)
+          setUser(session?.user ?? null)
+          
+          if (session?.user) {
+            await fetchProfile(session.user.id)
+          } else {
+            setLoading(false)
+          }
+        }
+      } catch (error) {
+        console.error('Error in getInitialSession:', error)
+        if (mounted) {
+          setLoading(false)
+        }
       }
-    })
+    }
+
+    getInitialSession()
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email)
+      
+      if (!mounted) return
+
       setSession(session)
       setUser(session?.user ?? null)
       
@@ -59,12 +88,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const fetchProfile = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      console.log('Fetching profile for user:', userId)
+      
+      // First, try to get the profile
+      let { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -72,37 +107,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error fetching profile:', error)
-      } else {
-        setProfile(data)
+        
+        // If profile doesn't exist, create it
+        if (error.code === 'PGRST116') {
+          console.log('Profile not found, creating new profile...')
+          
+          const { data: user } = await supabase.auth.getUser()
+          if (user.user) {
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userId,
+                email: user.user.email!,
+                full_name: user.user.user_metadata?.full_name || user.user.email,
+                role: 'employee',
+                is_active: true
+              })
+              .select()
+              .single()
+
+            if (createError) {
+              console.error('Error creating profile:', createError)
+            } else {
+              profile = newProfile
+              console.log('Profile created successfully:', profile)
+            }
+          }
+        }
+      }
+
+      if (profile) {
+        console.log('Profile loaded:', profile)
+        setProfile(profile)
       }
     } catch (error) {
-      console.error('Error fetching profile:', error)
+      console.error('Error in fetchProfile:', error)
     } finally {
       setLoading(false)
     }
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-    return { error }
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      return { error }
+    } catch (error) {
+      return { error }
+    }
   }
 
   const signUp = async (email: string, password: string, userData: any) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: userData,
-      },
-    })
-    return { error }
+    setLoading(true)
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: userData.full_name,
+            role: userData.role || 'employee'
+          },
+        },
+      })
+      return { error }
+    } catch (error) {
+      return { error }
+    }
   }
 
   const signOut = async () => {
+    setLoading(true)
     await supabase.auth.signOut()
+    setProfile(null)
+    setLoading(false)
   }
 
   const updateProfile = async (updates: Partial<Profile>) => {
@@ -110,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', user.id)
 
     if (!error) {
@@ -118,6 +199,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     return { error }
+  }
+
+  const promoteToSuperAdmin = async (email: string) => {
+    try {
+      const { error } = await supabase.rpc('promote_to_super_admin', {
+        user_email: email
+      })
+      
+      if (!error) {
+        // Refresh profile if it's the current user
+        if (user?.email === email) {
+          await fetchProfile(user.id)
+        }
+      }
+      
+      return { error }
+    } catch (error) {
+      return { error }
+    }
   }
 
   const value = {
@@ -129,6 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp,
     signOut,
     updateProfile,
+    promoteToSuperAdmin,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

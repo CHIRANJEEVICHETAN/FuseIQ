@@ -4,14 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Lock, Eye, EyeOff, Sparkles, User } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Sparkles, User, Shield } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
 export const LoginForm = () => {
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, promoteToSuperAdmin } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showAdminSetup, setShowAdminSetup] = useState(false);
   
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -27,6 +28,9 @@ export const LoginForm = () => {
     fullName: "",
     role: "employee" as const
   });
+
+  // Admin setup state
+  const [adminEmail, setAdminEmail] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +48,10 @@ export const LoginForm = () => {
       const { error } = await signIn(loginData.email, loginData.password);
       
       if (error) {
+        console.error('Login error:', error);
         toast({
           title: "Login Failed",
-          description: error.message,
+          description: error.message || "Invalid credentials",
           variant: "destructive",
         });
       } else {
@@ -56,6 +61,7 @@ export const LoginForm = () => {
         });
       }
     } catch (error) {
+      console.error('Login exception:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -104,18 +110,66 @@ export const LoginForm = () => {
       });
       
       if (error) {
+        console.error('Signup error:', error);
         toast({
           title: "Signup Failed",
-          description: error.message,
+          description: error.message || "Failed to create account",
           variant: "destructive",
         });
       } else {
         toast({
           title: "Success",
-          description: "Account created successfully! Please check your email to verify your account.",
+          description: "Account created successfully! You can now sign in.",
         });
+        // Switch to login tab
+        const loginTab = document.querySelector('[value="login"]') as HTMLElement;
+        loginTab?.click();
       }
     } catch (error) {
+      console.error('Signup exception:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePromoteToAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!adminEmail) {
+      toast({
+        title: "Error",
+        description: "Please enter an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await promoteToSuperAdmin(adminEmail);
+      
+      if (error) {
+        console.error('Promotion error:', error);
+        toast({
+          title: "Promotion Failed",
+          description: error.message || "Failed to promote user",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "User promoted to Super Admin successfully!",
+        });
+        setAdminEmail("");
+        setShowAdminSetup(false);
+      }
+    } catch (error) {
+      console.error('Promotion exception:', error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",
@@ -286,9 +340,47 @@ export const LoginForm = () => {
             </TabsContent>
           </Tabs>
           
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Demo Admin Credentials:</p>
-            <p className="font-mono text-xs">admin@evolve.com / admin123</p>
+          <div className="mt-6 space-y-4">
+            <div className="text-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAdminSetup(!showAdminSetup)}
+                className="bg-gradient-glass backdrop-blur-glass-sm border-white/20 hover:bg-white/20"
+              >
+                <Shield className="h-4 w-4 mr-2" />
+                Setup Super Admin
+              </Button>
+            </div>
+            
+            {showAdminSetup && (
+              <form onSubmit={handlePromoteToAdmin} className="space-y-3 p-4 bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg">
+                <Label htmlFor="admin-email" className="text-sm font-medium">
+                  Promote User to Super Admin
+                </Label>
+                <Input
+                  id="admin-email"
+                  type="email"
+                  placeholder="Enter user email to promote"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  className="bg-gradient-glass backdrop-blur-glass-sm border-white/20 focus:border-primary/50 transition-all duration-300"
+                  required
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="w-full bg-gradient-accent hover:opacity-90 transition-all duration-300"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Promoting..." : "Promote to Super Admin"}
+                </Button>
+              </form>
+            )}
+            
+            <div className="text-center text-sm text-muted-foreground">
+              <p>First time setup? Create an account, then use "Setup Super Admin" to promote yourself.</p>
+            </div>
           </div>
         </CardContent>
       </Card>
