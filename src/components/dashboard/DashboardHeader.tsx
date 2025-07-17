@@ -2,6 +2,7 @@ import { Bell, Search, Settings, User, LogOut, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,11 +17,23 @@ interface DashboardHeaderProps {
     name: string;
     email: string;
     avatar?: string;
+    role: string;
   };
   onLogout: () => void;
 }
 
 export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'super_admin': return 'bg-destructive';
+      case 'org_admin': return 'bg-warning';
+      case 'dept_admin': return 'bg-info';
+      case 'project_manager': return 'bg-success';
+      case 'team_lead': return 'bg-primary';
+      default: return 'bg-secondary';
+    }
+  };
+
   return (
     <header className="bg-gradient-glass backdrop-blur-glass border-b border-white/20 px-6 py-4 sticky top-0 z-50">
       <div className="flex items-center justify-between">
@@ -68,11 +81,17 @@ export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
               forceMount
             >
               <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
+                <div className="flex flex-col space-y-2">
                   <p className="text-sm font-medium leading-none">{user.name}</p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}
                   </p>
+                  <Badge 
+                    variant="outline" 
+                    className={`${getRoleColor(user.role)} text-white border-white/20 text-xs w-fit`}
+                  >
+                    {user.role.replace('_', ' ').toUpperCase()}
+                  </Badge>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/20" />

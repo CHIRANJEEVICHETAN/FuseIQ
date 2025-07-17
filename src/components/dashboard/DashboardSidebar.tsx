@@ -6,7 +6,11 @@ import {
   Calendar, 
   FileText, 
   Settings, 
-  BarChart3 
+  BarChart3,
+  UserCheck,
+  Plane,
+  Receipt,
+  UserCog
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,14 +20,21 @@ interface SidebarItem {
   icon: React.ReactNode;
   active?: boolean;
   onClick: () => void;
+  requiredRoles?: string[];
 }
 
 interface DashboardSidebarProps {
   activeSection: string;
   onSectionChange: (section: string) => void;
+  userRole: string;
 }
 
-export const DashboardSidebar = ({ activeSection, onSectionChange }: DashboardSidebarProps) => {
+export const DashboardSidebar = ({ activeSection, onSectionChange, userRole }: DashboardSidebarProps) => {
+  const hasPermission = (requiredRoles?: string[]) => {
+    if (!requiredRoles) return true;
+    return requiredRoles.includes(userRole);
+  };
+
   const sidebarItems: SidebarItem[] = [
     {
       name: "Dashboard",
@@ -42,6 +53,31 @@ export const DashboardSidebar = ({ activeSection, onSectionChange }: DashboardSi
       icon: <Clock className="h-5 w-5" />,
       active: activeSection === "time",
       onClick: () => onSectionChange("time")
+    },
+    {
+      name: "Attendance",
+      icon: <UserCheck className="h-5 w-5" />,
+      active: activeSection === "attendance",
+      onClick: () => onSectionChange("attendance")
+    },
+    {
+      name: "Leave Management",
+      icon: <Plane className="h-5 w-5" />,
+      active: activeSection === "leave",
+      onClick: () => onSectionChange("leave")
+    },
+    {
+      name: "Expenses",
+      icon: <Receipt className="h-5 w-5" />,
+      active: activeSection === "expenses",
+      onClick: () => onSectionChange("expenses")
+    },
+    {
+      name: "User Management",
+      icon: <UserCog className="h-5 w-5" />,
+      active: activeSection === "users",
+      onClick: () => onSectionChange("users"),
+      requiredRoles: ['super_admin', 'org_admin', 'dept_admin']
     },
     {
       name: "Team",
@@ -75,11 +111,13 @@ export const DashboardSidebar = ({ activeSection, onSectionChange }: DashboardSi
     }
   ];
 
+  const visibleItems = sidebarItems.filter(item => hasPermission(item.requiredRoles));
+
   return (
     <aside className="bg-gradient-glass backdrop-blur-glass border-r border-white/20 w-64 flex flex-col shadow-glass-lg">
       <div className="p-6">
         <nav className="space-y-2">
-          {sidebarItems.map((item) => (
+          {visibleItems.map((item) => (
             <Button
               key={item.name}
               variant={item.active ? "default" : "ghost"}
@@ -98,15 +136,15 @@ export const DashboardSidebar = ({ activeSection, onSectionChange }: DashboardSi
       
       <div className="mt-auto p-6">
         <div className="bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg p-4 shadow-glass-sm">
-          <h3 className="font-semibold text-sm mb-2">Upgrade to Pro</h3>
+          <h3 className="font-semibold text-sm mb-2">Role: {userRole.replace('_', ' ').toUpperCase()}</h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Get unlimited projects and advanced features
+            Full-featured project management system
           </p>
           <Button 
             size="sm" 
             className="w-full bg-gradient-accent hover:opacity-90 transition-all duration-300 shadow-glass-sm"
           >
-            Upgrade Now
+            View Profile
           </Button>
         </div>
       </div>
