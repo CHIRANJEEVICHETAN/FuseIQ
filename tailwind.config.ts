@@ -78,44 +78,60 @@ export default {
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',
 				'gradient-secondary': 'var(--gradient-secondary)',
-				'gradient-accent': 'var(--gradient-accent)'
+				'gradient-accent': 'var(--gradient-accent)',
+				'gradient-glass': 'var(--gradient-glass)',
+				'gradient-glass-border': 'var(--gradient-glass-border)'
+			},
+			backdropBlur: {
+				'glass': 'var(--blur-glass)',
+				'glass-sm': 'var(--blur-glass-sm)',
+				'glass-lg': 'var(--blur-glass-lg)'
 			},
 			boxShadow: {
-				'sm': 'var(--shadow-sm)',
-				'md': 'var(--shadow-md)',
-				'lg': 'var(--shadow-lg)',
-				'xl': 'var(--shadow-xl)'
-			},
-			transitionProperty: {
-				'smooth': 'var(--transition-smooth)',
-				'fast': 'var(--transition-fast)'
+				'glass': 'var(--shadow-glass)',
+				'glass-sm': 'var(--shadow-glass-sm)',
+				'glass-lg': 'var(--shadow-glass-lg)',
+				'glass-xl': 'var(--shadow-glass-xl)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
 			},
-			keyframes: {
-				'accordion-down': {
-					from: {
-						height: '0'
-					},
-					to: {
-						height: 'var(--radix-accordion-content-height)'
-					}
-				},
-				'accordion-up': {
-					from: {
-						height: 'var(--radix-accordion-content-height)'
-					},
-					to: {
-						height: '0'
-					}
-				}
-			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 20s ease-in-out infinite',
+				'pulse-glow': 'pulse-glow 2s ease-in-out infinite alternate',
+				'slide-in': 'slide-in 0.5s ease-out',
+				'glass-morph': 'glass-morph 3s ease-in-out infinite'
+			},
+			keyframes: {
+				'accordion-down': {
+					from: { height: '0' },
+					to: { height: 'var(--radix-accordion-content-height)' }
+				},
+				'accordion-up': {
+					from: { height: 'var(--radix-accordion-content-height)' },
+					to: { height: '0' }
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'pulse-glow': {
+					'0%': { boxShadow: '0 0 20px hsl(262 100% 70% / 0.3)' },
+					'100%': { boxShadow: '0 0 40px hsl(262 100% 70% / 0.6)' }
+				},
+				'slide-in': {
+					'0%': { transform: 'translateX(-100%)', opacity: '0' },
+					'100%': { transform: 'translateX(0)', opacity: '1' }
+				},
+				'glass-morph': {
+					'0%': { background: 'var(--gradient-glass)' },
+					'50%': { background: 'var(--gradient-glass-border)' },
+					'100%': { background: 'var(--gradient-glass)' }
+				}
 			}
 		}
 	},

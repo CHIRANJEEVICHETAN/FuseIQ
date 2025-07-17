@@ -7,7 +7,9 @@ import {
   Users, 
   TrendingUp, 
   Calendar,
-  Activity
+  Activity,
+  Sparkles,
+  Target
 } from "lucide-react";
 
 export const DashboardHome = () => {
@@ -96,10 +98,12 @@ export const DashboardHome = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Good morning, John!</h2>
-          <p className="text-muted-foreground">Here's what's happening with your projects today.</p>
+          <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            Good morning, John!
+          </h2>
+          <p className="text-muted-foreground mt-1">Here's what's happening with your projects today.</p>
         </div>
-        <Badge variant="outline" className="text-sm">
+        <Badge variant="outline" className="text-sm bg-gradient-glass backdrop-blur-glass-sm border-white/20">
           <Calendar className="h-4 w-4 mr-2" />
           {new Date().toLocaleDateString('en-US', { 
             weekday: 'long', 
@@ -112,7 +116,7 @@ export const DashboardHome = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => (
-          <Card key={index}>
+          <Card key={index} className="bg-gradient-glass backdrop-blur-glass border-white/20 shadow-glass-sm hover:shadow-glass-lg transition-all duration-300 hover:-translate-y-1">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
               <div className={stat.color}>
@@ -130,7 +134,7 @@ export const DashboardHome = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="bg-gradient-glass backdrop-blur-glass border-white/20 shadow-glass-lg">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Activity className="h-5 w-5 mr-2" />
@@ -140,7 +144,7 @@ export const DashboardHome = () => {
           <CardContent>
             <div className="space-y-3">
               {recentTasks.map((task) => (
-                <div key={task.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                <div key={task.id} className="flex items-center justify-between p-3 bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg hover:bg-white/20 transition-all duration-300">
                   <div className="flex-1">
                     <h4 className="font-medium">{task.title}</h4>
                     <div className="flex items-center space-x-2 mt-1">
@@ -153,7 +157,7 @@ export const DashboardHome = () => {
                   <div className="text-right space-y-1">
                     <Badge 
                       variant="outline" 
-                      className={`${getPriorityColor(task.priority)} text-white text-xs`}
+                      className={`${getPriorityColor(task.priority)} text-white text-xs border-white/20`}
                     >
                       {task.priority}
                     </Badge>
@@ -165,34 +169,37 @@ export const DashboardHome = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-glass backdrop-blur-glass border-white/20 shadow-glass-lg">
           <CardHeader>
-            <CardTitle>Project Progress</CardTitle>
+            <CardTitle className="flex items-center">
+              <Target className="h-5 w-5 mr-2" />
+              Project Progress
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-2">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Authentication System</span>
                 <span className="text-sm text-muted-foreground">75%</span>
               </div>
               <Progress value={75} className="h-2" />
             </div>
-            <div>
-              <div className="flex justify-between items-center mb-2">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Task Management</span>
                 <span className="text-sm text-muted-foreground">60%</span>
               </div>
               <Progress value={60} className="h-2" />
             </div>
-            <div>
-              <div className="flex justify-between items-center mb-2">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Time Tracking</span>
                 <span className="text-sm text-muted-foreground">85%</span>
               </div>
               <Progress value={85} className="h-2" />
             </div>
-            <div>
-              <div className="flex justify-between items-center mb-2">
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Reporting Dashboard</span>
                 <span className="text-sm text-muted-foreground">40%</span>
               </div>
@@ -201,6 +208,34 @@ export const DashboardHome = () => {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="bg-gradient-glass backdrop-blur-glass border-white/20 shadow-glass-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Sparkles className="h-5 w-5 mr-2" />
+            Quick Actions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg p-4 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+              <CheckSquare className="h-6 w-6 text-primary mb-2" />
+              <h3 className="font-medium">Create Task</h3>
+              <p className="text-sm text-muted-foreground">Add a new task to your board</p>
+            </div>
+            <div className="bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg p-4 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+              <Clock className="h-6 w-6 text-success mb-2" />
+              <h3 className="font-medium">Start Timer</h3>
+              <p className="text-sm text-muted-foreground">Begin tracking time</p>
+            </div>
+            <div className="bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg p-4 hover:bg-white/20 transition-all duration-300 cursor-pointer">
+              <Users className="h-6 w-6 text-info mb-2" />
+              <h3 className="font-medium">Invite Team</h3>
+              <p className="text-sm text-muted-foreground">Add team members</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

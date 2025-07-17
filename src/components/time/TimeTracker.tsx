@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Pause, Square, Timer } from "lucide-react";
+import { Play, Pause, Square, Timer, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -137,14 +137,20 @@ export const TimeTracker = () => {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Time Tracker</h2>
-        <Badge variant="outline" className="text-lg px-4 py-2">
+        <div>
+          <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            Time Tracker
+          </h2>
+          <p className="text-muted-foreground mt-1">Track your productivity and focus</p>
+        </div>
+        <Badge variant="outline" className="text-lg px-4 py-2 bg-gradient-glass backdrop-blur-glass-sm border-white/20">
+          <Sparkles className="h-4 w-4 mr-2" />
           Today: {formatDuration(getTotalTimeToday())}
         </Badge>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="bg-gradient-glass backdrop-blur-glass border-white/20 shadow-glass-lg">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Timer className="h-5 w-5 mr-2" />
@@ -153,50 +159,71 @@ export const TimeTracker = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
-              <div className="text-4xl font-mono font-bold text-primary">
+              <div className="text-5xl font-mono font-bold bg-gradient-primary bg-clip-text text-transparent">
                 {formatTime(currentTime)}
               </div>
-              <div className="text-sm text-muted-foreground mt-1">
-                {isRunning ? "Running..." : "Stopped"}
+              <div className="text-sm text-muted-foreground mt-2">
+                {isRunning ? (
+                  <Badge className="bg-success text-white animate-pulse">
+                    Running...
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-gradient-glass backdrop-blur-glass-sm border-white/20">
+                    Stopped
+                  </Badge>
+                )}
               </div>
             </div>
 
             <div className="space-y-3">
               <div>
-                <Label htmlFor="task-name">Task Name</Label>
+                <Label htmlFor="task-name" className="text-sm font-medium">Task Name</Label>
                 <Input
                   id="task-name"
                   placeholder="What are you working on?"
                   value={taskName}
                   onChange={(e) => setTaskName(e.target.value)}
+                  className="bg-gradient-glass backdrop-blur-glass-sm border-white/20 focus:border-primary/50 transition-all duration-300"
                 />
               </div>
 
               <div>
-                <Label htmlFor="description">Description (optional)</Label>
+                <Label htmlFor="description" className="text-sm font-medium">Description (optional)</Label>
                 <Textarea
                   id="description"
                   placeholder="Add details about your work..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
+                  className="bg-gradient-glass backdrop-blur-glass-sm border-white/20 focus:border-primary/50 transition-all duration-300"
                 />
               </div>
             </div>
 
             <div className="flex justify-center space-x-2">
               {!isRunning ? (
-                <Button onClick={handleStart} className="bg-success hover:bg-success/90">
+                <Button 
+                  onClick={handleStart} 
+                  className="bg-success hover:bg-success/90 transition-all duration-300 shadow-glass-sm hover:shadow-glass-lg transform hover:-translate-y-1"
+                >
                   <Play className="h-4 w-4 mr-2" />
                   Start
                 </Button>
               ) : (
-                <Button onClick={handlePause} variant="outline">
+                <Button 
+                  onClick={handlePause} 
+                  variant="outline"
+                  className="bg-gradient-glass backdrop-blur-glass-sm border-white/20 hover:bg-white/20 transition-all duration-300"
+                >
                   <Pause className="h-4 w-4 mr-2" />
                   Pause
                 </Button>
               )}
-              <Button onClick={handleStop} variant="outline">
+              <Button 
+                onClick={handleStop} 
+                variant="outline"
+                className="bg-gradient-glass backdrop-blur-glass-sm border-white/20 hover:bg-white/20 transition-all duration-300"
+              >
                 <Square className="h-4 w-4 mr-2" />
                 Stop
               </Button>
@@ -204,28 +231,32 @@ export const TimeTracker = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="bg-gradient-glass backdrop-blur-glass border-white/20 shadow-glass-lg">
           <CardHeader>
             <CardTitle>Recent Time Entries</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {timeEntries.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium">{entry.taskName}</h4>
-                    {entry.description && (
-                      <p className="text-sm text-muted-foreground">{entry.description}</p>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      {entry.startTime} - {entry.endTime}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="outline">{formatDuration(entry.duration)}</Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(entry.date).toLocaleDateString()}
-                    </p>
+                <div key={entry.id} className="p-3 bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg hover:bg-white/20 transition-all duration-300">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{entry.taskName}</h4>
+                      {entry.description && (
+                        <p className="text-sm text-muted-foreground">{entry.description}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {entry.startTime} - {entry.endTime}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <Badge variant="outline" className="bg-gradient-glass backdrop-blur-glass-sm border-white/20">
+                        {formatDuration(entry.duration)}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(entry.date).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, MoreHorizontal, Clock, User } from "lucide-react";
+import { Plus, MoreHorizontal, Clock, User, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -152,8 +152,13 @@ export const TaskBoard = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Task Board</h2>
-        <Button className="bg-gradient-primary">
+        <div>
+          <h2 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            Task Board
+          </h2>
+          <p className="text-muted-foreground mt-1">Organize and track your team's progress</p>
+        </div>
+        <Button className="bg-gradient-primary hover:opacity-90 transition-all duration-300 shadow-glass-sm hover:shadow-glass-lg transform hover:-translate-y-1">
           <Plus className="h-4 w-4 mr-2" />
           Add Task
         </Button>
@@ -164,14 +169,17 @@ export const TaskBoard = () => {
           <div key={column.id} className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <div className={`w-3 h-3 rounded-full ${column.color}`} />
+                <div className={`w-3 h-3 rounded-full ${column.color} shadow-glass-sm`} />
                 <h3 className="font-semibold">{column.title}</h3>
-                <Badge variant="secondary">{column.tasks.length}</Badge>
+                <Badge variant="outline" className="bg-gradient-glass backdrop-blur-glass-sm border-white/20">
+                  {column.tasks.length}
+                </Badge>
               </div>
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => addTask(column.id)}
+                className="hover:bg-white/20 transition-all duration-300"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -179,7 +187,7 @@ export const TaskBoard = () => {
 
             <div className="space-y-3">
               {column.tasks.map((task) => (
-                <Card key={task.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                <Card key={task.id} className="bg-gradient-glass backdrop-blur-glass border-white/20 shadow-glass-sm hover:shadow-glass-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <CardTitle className="text-sm font-medium leading-tight">
@@ -187,13 +195,13 @@ export const TaskBoard = () => {
                       </CardTitle>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" className="hover:bg-white/20 transition-colors">
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuContent className="bg-gradient-glass backdrop-blur-glass border-white/20 shadow-glass-lg">
+                          <DropdownMenuItem className="hover:bg-white/20 transition-colors">Edit</DropdownMenuItem>
+                          <DropdownMenuItem className="hover:bg-white/20 transition-colors">Delete</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -206,7 +214,7 @@ export const TaskBoard = () => {
                     <div className="flex items-center justify-between mb-3">
                       <Badge 
                         variant="outline" 
-                        className={`${getPriorityColor(task.priority)} text-white`}
+                        className={`${getPriorityColor(task.priority)} text-white border-white/20`}
                       >
                         {task.priority}
                       </Badge>
@@ -220,7 +228,7 @@ export const TaskBoard = () => {
                       <div className="flex items-center space-x-2">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={task.assignee.avatar} />
-                          <AvatarFallback className="text-xs">
+                          <AvatarFallback className="text-xs bg-gradient-primary text-white">
                             {task.assignee.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>

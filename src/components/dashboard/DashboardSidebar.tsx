@@ -76,7 +76,7 @@ export const DashboardSidebar = ({ activeSection, onSectionChange }: DashboardSi
   ];
 
   return (
-    <aside className="bg-card border-r border-border w-64 flex flex-col">
+    <aside className="bg-gradient-glass backdrop-blur-glass border-r border-white/20 w-64 flex flex-col shadow-glass-lg">
       <div className="p-6">
         <nav className="space-y-2">
           {sidebarItems.map((item) => (
@@ -84,8 +84,8 @@ export const DashboardSidebar = ({ activeSection, onSectionChange }: DashboardSi
               key={item.name}
               variant={item.active ? "default" : "ghost"}
               className={cn(
-                "w-full justify-start",
-                item.active && "bg-primary text-primary-foreground"
+                "w-full justify-start transition-all duration-300 hover:bg-white/20",
+                item.active && "bg-gradient-primary text-white shadow-glass-sm hover:bg-gradient-primary/90"
               )}
               onClick={item.onClick}
             >
@@ -94,6 +94,21 @@ export const DashboardSidebar = ({ activeSection, onSectionChange }: DashboardSi
             </Button>
           ))}
         </nav>
+      </div>
+      
+      <div className="mt-auto p-6">
+        <div className="bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg p-4 shadow-glass-sm">
+          <h3 className="font-semibold text-sm mb-2">Upgrade to Pro</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            Get unlimited projects and advanced features
+          </p>
+          <Button 
+            size="sm" 
+            className="w-full bg-gradient-accent hover:opacity-90 transition-all duration-300 shadow-glass-sm"
+          >
+            Upgrade Now
+          </Button>
+        </div>
       </div>
     </aside>
   );

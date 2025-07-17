@@ -55,14 +55,14 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <DashboardHeader user={user} onLogout={handleLogout} />
       <div className="flex">
         <DashboardSidebar 
           activeSection={activeSection} 
           onSectionChange={setActiveSection} 
         />
-        <main className="flex-1 bg-background">
+        <main className="flex-1 bg-gradient-glass backdrop-blur-glass">
           {renderContent()}
         </main>
       </div>
