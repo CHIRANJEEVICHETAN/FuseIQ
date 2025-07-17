@@ -23,6 +23,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { Database } from "@/types/database";
+import { cn } from "@/lib/utils";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Department = Database['public']['Tables']['departments']['Row'];

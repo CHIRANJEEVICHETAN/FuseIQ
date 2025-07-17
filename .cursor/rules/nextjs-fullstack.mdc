@@ -1,0 +1,98 @@
+# Next.js Fullstack Project Rules & Best Practices
+
+## General
+- Use Next.js conventions for file and folder structure (e.g., `pages/`, `app/`, `api/` for routes and endpoints).
+- Prefer TypeScript for all new code; use strict type checking.
+- Use environment variables for secrets and database credentials (e.g., via `.env.local`).
+- Keep dependencies up to date and remove unused packages regularly.
+- Use a monorepo structure (e.g., with Turborepo) for large projects with shared code.
+
+## Frontend
+- Use React functional components and hooks; avoid class components.
+- Organize UI components in a `components/` directory, and use atomic design principles if possible.
+- Use CSS Modules, Tailwind CSS, or styled-components for styling; avoid global CSS when possible.
+- Prefer client-side rendering for interactive UI, server-side rendering (SSR) for SEO/content pages, and static generation (SSG) for rarely-changing content.
+- Use Next.js Image component for optimized images.
+- Use Suspense and React.lazy for code splitting and lazy loading.
+- Use SWR or React Query for client-side data fetching and caching.
+- Avoid prop drilling by using context or state management libraries (e.g., Zustand, Redux, Jotai) when needed.
+- Use accessibility best practices (ARIA roles, semantic HTML, keyboard navigation).
+
+## Backend (API Routes)
+- Place API endpoints in the `pages/api/` or `app/api/` directory.
+- Use async/await for all asynchronous operations.
+- Validate all incoming data (e.g., with Zod or Joi) and sanitize inputs.
+- Handle errors gracefully and return appropriate HTTP status codes and error messages.
+- Use middleware for authentication, logging, and rate limiting.
+- Avoid exposing sensitive information in API responses.
+- Log errors and important events (e.g., with Winston, Pino, or Sentry).
+
+## PostgreSQL Integration
+- Use a PostgreSQL client (e.g., `pg`, `Prisma`, or `Drizzle ORM`) for database access.
+- Store connection strings and credentials in environment variables.
+- Use migrations for schema changes (e.g., Prisma Migrate, Drizzle Kit, or SQL migration files).
+- Never commit `.env*` files or database credentials to version control.
+- Prefer parameterized queries or ORM methods to prevent SQL injection.
+- Use connection pooling for efficient database access.
+- Index frequently queried columns for performance.
+- Regularly back up your database and test restores.
+
+## Security Best Practices
+- Use HTTPS in production; never expose sensitive data over HTTP.
+- Store secrets and credentials securely (e.g., environment variables, secret managers).
+- Sanitize and validate all user input to prevent XSS and SQL injection.
+- Use CSRF protection for state-changing endpoints.
+- Implement authentication (e.g., NextAuth.js, Auth0) and authorization checks for protected routes.
+- Keep dependencies up to date to avoid known vulnerabilities.
+
+## Performance Best Practices
+- Use Next.js built-in image and font optimization.
+- Enable caching for static assets and API responses where appropriate.
+- Use incremental static regeneration (ISR) for dynamic content that changes infrequently.
+- Minimize bundle size by code splitting and removing unused code.
+- Monitor performance with tools like Lighthouse, Web Vitals, and APM solutions.
+
+## Testing
+- Write unit tests for components, utilities, and API routes (e.g., with Jest, React Testing Library).
+- Use integration and end-to-end tests (e.g., with Cypress, Playwright) for critical flows.
+- Run tests automatically in CI/CD pipelines.
+- Use test databases or mocks for backend tests.
+
+## Code Quality
+- Use ESLint and Prettier for consistent code style and formatting.
+- Enforce code reviews and pull requests for all changes.
+- Use type checking (TypeScript) and static analysis tools.
+- Document components, functions, and API endpoints with JSDoc or similar.
+- Maintain a clear and up-to-date README and developer documentation.
+
+## Deployment
+- Use environment-specific configuration files (e.g., `.env.production`, `.env.development`).
+- Automate deployments with CI/CD (e.g., GitHub Actions, Vercel, Netlify).
+- Monitor application health and errors in production (e.g., Sentry, Datadog).
+- Use database migrations as part of the deployment process.
+- Roll back deployments quickly if issues are detected.
+
+## Example PostgreSQL Connection (with `pg`):
+```ts
+import { Pool } from 'pg';
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export default pool;
+```
+
+## Example API Route (with Next.js):
+```ts
+// pages/api/users.ts
+import pool from '../../lib/db';
+export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    const { rows } = await pool.query('SELECT * FROM users');
+    res.status(200).json(rows);
+  } else {
+    res.status(405).end();
+  }
+}
+```
+description:
+globs:
+alwaysApply: false
+---
