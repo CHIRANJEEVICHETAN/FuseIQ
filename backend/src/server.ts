@@ -27,6 +27,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://127.0.0.1:8080',
   'http://127.0.0.1:3000',
+  'https://fuse-iq.vercel.app',
   // Allow any localhost with any port for development
   /^http:\/\/localhost:\d+$/,
   /^http:\/\/127\.0\.0\.1:\d+$/,
