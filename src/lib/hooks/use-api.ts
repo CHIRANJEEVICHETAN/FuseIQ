@@ -35,6 +35,32 @@ export const useUser = (id: string, options?: UseQueryOptions<ApiResponse<User>>
   });
 };
 
+interface CreateUserRequest {
+  email: string;
+  password: string;
+  fullName: string;
+  role: string;
+  departmentId?: string;
+  phone?: string;
+  position?: string;
+}
+
+export const useCreateUser = (options?: UseMutationOptions<ApiResponse<User>, Error, CreateUserRequest>) => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: (data) => api.post<User>('/users', data),
+    onSuccess: () => {
+      // Invalidate users list to refresh
+      queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() });
+    },
+    onError: (error) => {
+      console.error('Create user error:', handleApiError(error));
+    },
+    ...options,
+  });
+};
+
 export const useUpdateUser = (options?: UseMutationOptions<ApiResponse<User>, Error, { id: string; data: Partial<User> }>) => {
   const queryClient = useQueryClient();
   

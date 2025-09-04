@@ -184,12 +184,27 @@
 
 -   **Comprehensive Employee Profiles**: Personal, professional, and emergency contact information
 -   **Document Management**: Digital storage for contracts, certificates, and personal documents
--   **Organizational Chart**: Interactive org chart with reporting relationships
+-   **Interactive Organizational Chart**: Visual hierarchy with drag-and-drop editing capabilities
 -   **Employee Directory**: Searchable directory with skills and expertise tags
 -   **Contact Management**: Emergency contacts and next of kin information
 -   **Skills Matrix**: Competency tracking and skill gap analysis
 -   **Career Progression**: Career path planning and milestone tracking
 -   **Employee Self-Service**: Profile updates, document uploads, and information requests
+
+#### Organizational Chart & Hierarchy Management
+
+-   **Visual Org Chart**: Interactive tree-view showing complete organizational structure
+-   **Reporting Relationships**: Clear manager-subordinate relationships with direct/indirect reports
+-   **Department Structure**: Visual representation of departments and teams
+-   **Role Hierarchy**: Position levels and career progression paths
+-   **Team Composition**: Team member groupings with project assignments
+-   **Span of Control**: Manager workload and team size visualization
+-   **Vacant Positions**: Open positions and recruitment needs tracking
+-   **Organizational Changes**: History of structural changes and reorganizations
+-   **Export Options**: PDF and image export for presentations and documentation
+-   **Mobile View**: Mobile-optimized org chart for easy access on phones
+-   **Search & Filter**: Quick employee search within the organizational structure
+-   **Contact Integration**: Click-to-contact functionality from org chart nodes
 
 #### Offboarding & Exit Management
 
@@ -376,6 +391,10 @@
 -   **Meeting Management**: Meeting scheduling and action item tracking
 -   **Status Updates**: Regular progress updates and blockers identification
 -   **Approval Workflows**: Review and approval processes for deliverables
+-   **Org Chart Integration**: Visual team selection based on organizational hierarchy
+-   **Role-based Task Assignment**: Assign tasks based on employee roles and reporting structure
+-   **Team Formation**: Create project teams using org chart for proper authority levels
+-   **Escalation Paths**: Automatic escalation following organizational reporting structure
 
 #### Issue & Risk Management
 
@@ -591,6 +610,17 @@
 -   **Training Catalog**: Available training courses and learning paths
 -   **Directory Access**: Employee directory and organizational chart
 -   **Feedback System**: Performance feedback and goal tracking
+
+#### Team Management & Organizational Tools
+
+-   **Interactive Org Chart**: Visual team hierarchy with role-based access levels
+-   **Team Directory**: Searchable employee directory with contact information
+-   **Reporting Structure**: Clear manager-subordinate relationships and escalation paths
+-   **Team Collaboration**: Project team formation based on organizational structure
+-   **Role-based Permissions**: Access control based on position in org chart
+-   **Succession Planning**: Identify potential successors and career paths
+-   **Team Analytics**: Team composition, span of control, and organizational metrics
+-   **Org Chart Updates**: Real-time updates when employees join, leave, or change roles
 
 ### 21. Mobile-First Design & Progressive Web App
 

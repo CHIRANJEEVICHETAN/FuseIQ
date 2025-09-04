@@ -17,6 +17,7 @@ import {
   validateQuery,
   validateParams,
   userSchemas,
+  authSchemas,
   commonSchemas
 } from '../middleware';
 import { createSuccessResponse, createErrorResponse } from '../utils/response.util';
@@ -30,6 +31,51 @@ router.use(generalRateLimit);
 router.use(authenticateToken);
 router.use(requireAuth);
 router.use(requireActiveUser);
+
+/**
+ * POST /api/users
+ * Create a new user (admin only)
+ */
+router.post('/',
+  requireAdmin, // Only admins can create users
+  creationRateLimit, // Apply creation rate limiting
+  validateBody(authSchemas.register), // Validate request body using register schema
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const authResponse = await AuthService.register(req.body);
+      
+      res.status(201).json(createSuccessResponse(
+        authResponse,
+        'User created successfully',
+        req.path
+      ));
+    } catch (error: unknown) {
+      console.error('Create user error:', error);
+      
+      let statusCode = 400;
+      let errorCode = 'USER_CREATION_FAILED';
+      let message = 'Failed to create user';
+
+      if (error instanceof Error && error.message === 'USER_ALREADY_EXISTS') {
+        statusCode = 409;
+        errorCode = 'USER_EXISTS';
+        message = 'User with this email already exists';
+      } else if (error instanceof Error && error.message.startsWith('WEAK_PASSWORD')) {
+        errorCode = 'WEAK_PASSWORD';
+        message = error.message.replace('WEAK_PASSWORD: ', '');
+      } else if (error instanceof Error && error.message === 'INVALID_DEPARTMENT') {
+        errorCode = 'INVALID_DEPARTMENT';
+        message = 'Invalid department specified';
+      }
+
+      res.status(statusCode).json(createErrorResponse(
+        errorCode,
+        message,
+        req.path
+      ));
+    }
+  }
+);
 
 /**
  * GET /api/users
