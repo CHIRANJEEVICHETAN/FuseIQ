@@ -18,29 +18,75 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { useAttendance, useCheckIn, useCheckOut } from "@/lib/hooks/use-api";
 import { format } from "date-fns";
 
 interface AttendanceRecord {
   id: string;
-  date: string;
-  clock_in: string | null;
-  clock_out: string | null;
-  break_duration_minutes: number | null;
-  total_hours: number | null;
-  status: 'present' | 'absent' | 'late' | 'half_day' | 'work_from_home';
-  location: string | null;
-  notes: string | null;
+  userId: string;
+  checkIn: string;
+  checkOut?: string;
+  breakStart?: string;
+  breakEnd?: string;
+  totalHours?: number;
+  status: 'PRESENT' | 'ABSENT' | 'LATE' | 'HALF_DAY';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
 }
 
 export const AttendanceTracker = () => {
   const { user } = useAuth();
-  const [currentAttendance, setCurrentAttendance] = useState<AttendanceRecord | null>(null);
-  const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
   const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Use TanStack Query hooks
+  const { data: attendanceData, isLoading: attendanceLoading } = useAttendance({
+    limit: 10,
+    sortBy: 'date',
+    sortOrder: 'desc'
+  });
+
+  const checkInMutation = useCheckIn({
+    onSuccess: () => {
+      toast({
+        title: "Clocked In",
+        description: `Successfully clocked in at ${format(new Date(), 'HH:mm')}`,
+      });
+      setLocation("");
+      setNotes("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to clock in. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const checkOutMutation = useCheckOut({
+    onSuccess: () => {
+      toast({
+        title: "Clocked Out",
+        description: `Successfully clocked out at ${format(new Date(), 'HH:mm')}`,
+      });
+      setNotes("");
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to clock out. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -50,159 +96,44 @@ export const AttendanceTracker = () => {
     return () => clearInterval(timer);
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      fetchTodayAttendance();
-      fetchAttendanceHistory();
-    }
-  }, [user]);
-
-  const fetchTodayAttendance = async () => {
-    if (!user) return;
-
-    const today = format(new Date(), 'yyyy-MM-dd');
-    
-    const { data, error } = await supabase
-      .from('attendance')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('date', today)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error fetching attendance:', error);
-      return;
-    }
-
-    setCurrentAttendance(data);
-  };
-
-  const fetchAttendanceHistory = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('attendance')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('date', { ascending: false })
-      .limit(10);
-
-    if (error) {
-      console.error('Error fetching attendance history:', error);
-      return;
-    }
-
-    setAttendanceHistory(data || []);
-  };
+  const attendanceHistory = attendanceData?.data?.data || [];
+  const currentAttendance = attendanceHistory.find(record => 
+    format(new Date(record.checkIn), 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+  ) || null;
 
   const handleClockIn = async () => {
     if (!user) return;
 
-    setIsLoading(true);
-    const now = new Date().toISOString();
-    const today = format(new Date(), 'yyyy-MM-dd');
-
-    try {
-      const { data, error } = await supabase
-        .from('attendance')
-        .upsert({
-          user_id: user.id,
-          date: today,
-          clock_in: now,
-          status: 'present',
-          location: location || null,
-          notes: notes || null
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setCurrentAttendance(data);
-      setLocation("");
-      setNotes("");
-      
-      toast({
-        title: "Clocked In",
-        description: `Successfully clocked in at ${format(new Date(), 'HH:mm')}`,
-      });
-    } catch (error) {
-      console.error('Error clocking in:', error);
-      toast({
-        title: "Error",
-        description: "Failed to clock in. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    checkInMutation.mutate({
+      location: location || undefined,
+      notes: notes || undefined
+    });
   };
 
   const handleClockOut = async () => {
     if (!user || !currentAttendance) return;
 
-    setIsLoading(true);
-    const now = new Date().toISOString();
-    
-    // Calculate total hours
-    const clockInTime = new Date(currentAttendance.clock_in!);
-    const clockOutTime = new Date(now);
-    const totalMinutes = Math.floor((clockOutTime.getTime() - clockInTime.getTime()) / (1000 * 60));
-    const breakMinutes = currentAttendance.break_duration_minutes || 0;
-    const totalHours = (totalMinutes - breakMinutes) / 60;
-
-    try {
-      const { data, error } = await supabase
-        .from('attendance')
-        .update({
-          clock_out: now,
-          total_hours: totalHours,
-          notes: notes || currentAttendance.notes
-        })
-        .eq('id', currentAttendance.id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setCurrentAttendance(data);
-      setNotes("");
-      
-      toast({
-        title: "Clocked Out",
-        description: `Successfully clocked out at ${format(new Date(), 'HH:mm')}. Total hours: ${totalHours.toFixed(2)}`,
-      });
-
-      fetchAttendanceHistory();
-    } catch (error) {
-      console.error('Error clocking out:', error);
-      toast({
-        title: "Error",
-        description: "Failed to clock out. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    checkOutMutation.mutate({
+      notes: notes || undefined
+    });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'present': return 'bg-success';
-      case 'late': return 'bg-warning';
-      case 'absent': return 'bg-destructive';
-      case 'half_day': return 'bg-info';
-      case 'work_from_home': return 'bg-primary';
+      case 'PRESENT': return 'bg-success';
+      case 'LATE': return 'bg-warning';
+      case 'ABSENT': return 'bg-destructive';
+      case 'HALF_DAY': return 'bg-info';
       default: return 'bg-secondary';
     }
   };
 
-  const formatTime = (timeString: string | null) => {
+  const formatTime = (timeString: string | null | undefined) => {
     if (!timeString) return '--:--';
     return format(new Date(timeString), 'HH:mm');
   };
 
-  const isCurrentlyClockedIn = currentAttendance?.clock_in && !currentAttendance?.clock_out;
+  const isCurrentlyClockedIn = currentAttendance?.checkIn && !currentAttendance?.checkOut;
 
   return (
     <div className="p-6 space-y-6">
@@ -243,13 +174,13 @@ export const AttendanceTracker = () => {
                 <div className="bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg p-3">
                   <div className="text-sm text-muted-foreground">Clock In</div>
                   <div className="text-lg font-semibold text-success">
-                    {formatTime(currentAttendance.clock_in)}
+                    {formatTime(currentAttendance.checkIn)}
                   </div>
                 </div>
                 <div className="bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg p-3">
                   <div className="text-sm text-muted-foreground">Clock Out</div>
                   <div className="text-lg font-semibold text-destructive">
-                    {formatTime(currentAttendance.clock_out)}
+                    {formatTime(currentAttendance.checkOut)}
                   </div>
                 </div>
               </div>
@@ -289,21 +220,21 @@ export const AttendanceTracker = () => {
               {!isCurrentlyClockedIn ? (
                 <Button 
                   onClick={handleClockIn}
-                  disabled={isLoading}
+                  disabled={checkInMutation.isPending}
                   className="bg-success hover:bg-success/90 transition-all duration-300 shadow-glass-sm hover:shadow-glass-lg transform hover:-translate-y-1"
                 >
                   <Play className="h-4 w-4 mr-2" />
-                  {isLoading ? "Clocking In..." : "Clock In"}
+                  {checkInMutation.isPending ? "Clocking In..." : "Clock In"}
                 </Button>
               ) : (
                 <Button 
                   onClick={handleClockOut}
-                  disabled={isLoading}
+                  disabled={checkOutMutation.isPending}
                   variant="outline"
                   className="bg-destructive hover:bg-destructive/90 text-white border-white/20 transition-all duration-300 shadow-glass-sm hover:shadow-glass-lg transform hover:-translate-y-1"
                 >
                   <Square className="h-4 w-4 mr-2" />
-                  {isLoading ? "Clocking Out..." : "Clock Out"}
+                  {checkOutMutation.isPending ? "Clocking Out..." : "Clock Out"}
                 </Button>
               )}
             </div>
@@ -334,7 +265,7 @@ export const AttendanceTracker = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <span className="font-medium">
-                          {format(new Date(record.date), 'MMM d, yyyy')}
+                          {format(new Date(record.checkIn), 'MMM d, yyyy')}
                         </span>
                         <Badge 
                           variant="outline" 
@@ -344,24 +275,24 @@ export const AttendanceTracker = () => {
                         </Badge>
                       </div>
                       <div className="text-sm text-muted-foreground mt-1">
-                        {formatTime(record.clock_in)} - {formatTime(record.clock_out)}
-                        {record.total_hours && (
+                        {formatTime(record.checkIn)} - {formatTime(record.checkOut)}
+                        {record.totalHours && (
                           <span className="ml-2">
-                            ({record.total_hours.toFixed(2)}h)
+                            ({record.totalHours.toFixed(2)}h)
                           </span>
                         )}
                       </div>
-                      {record.location && (
+                      {record.notes && (
                         <div className="text-xs text-muted-foreground flex items-center mt-1">
                           <MapPin className="h-3 w-3 mr-1" />
-                          {record.location}
+                          {record.notes}
                         </div>
                       )}
                     </div>
                     <div className="text-right">
-                      {record.clock_in && record.clock_out ? (
+                      {record.checkIn && record.checkOut ? (
                         <CheckCircle className="h-5 w-5 text-success" />
-                      ) : record.clock_in ? (
+                      ) : record.checkIn ? (
                         <Clock className="h-5 w-5 text-warning" />
                       ) : (
                         <XCircle className="h-5 w-5 text-destructive" />

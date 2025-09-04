@@ -7,7 +7,7 @@ export interface Database {
           email: string
           full_name: string | null
           avatar_url: string | null
-          role: 'super_admin' | 'org_admin' | 'dept_admin' | 'project_manager' | 'team_lead' | 'employee' | 'contractor'
+          role: 'SUPER_ADMIN' | 'ORG_ADMIN' | 'DEPT_ADMIN' | 'PROJECT_MANAGER' | 'TEAM_LEAD' | 'EMPLOYEE' | 'CONTRACTOR'
           department_id: string | null
           created_at: string
           updated_at: string
@@ -22,7 +22,7 @@ export interface Database {
           email: string
           full_name?: string | null
           avatar_url?: string | null
-          role?: 'super_admin' | 'org_admin' | 'dept_admin' | 'project_manager' | 'team_lead' | 'employee' | 'contractor'
+          role?: 'SUPER_ADMIN' | 'ORG_ADMIN' | 'DEPT_ADMIN' | 'PROJECT_MANAGER' | 'TEAM_LEAD' | 'EMPLOYEE' | 'CONTRACTOR'
           department_id?: string | null
           created_at?: string
           updated_at?: string
@@ -37,7 +37,7 @@ export interface Database {
           email?: string
           full_name?: string | null
           avatar_url?: string | null
-          role?: 'super_admin' | 'org_admin' | 'dept_admin' | 'project_manager' | 'team_lead' | 'employee' | 'contractor'
+          role?: 'SUPER_ADMIN' | 'ORG_ADMIN' | 'DEPT_ADMIN' | 'PROJECT_MANAGER' | 'TEAM_LEAD' | 'EMPLOYEE' | 'CONTRACTOR'
           department_id?: string | null
           created_at?: string
           updated_at?: string

@@ -21,30 +21,43 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { useExpenses, useCreateExpense } from "@/lib/hooks/use-api";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface Expense {
   id: string;
-  category: 'travel' | 'meals' | 'accommodation' | 'office_supplies' | 'client_entertainment' | 'other';
+  userId: string;
+  category: string;
   amount: number;
   currency: string;
   description: string;
-  expense_date: string;
-  receipt_url: string | null;
-  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'reimbursed';
-  approved_by: string | null;
-  approved_at: string | null;
-  rejection_reason: string | null;
-  project_id: string | null;
-  created_at: string;
+  expenseDate: string;
+  receiptUrl?: string;
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'REIMBURSED';
+  approverId?: string;
+  rejectionReason?: string;
+  projectId?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+  approver?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+  project?: {
+    id: string;
+    name: string;
+  };
 }
 
 export const ExpenseManagement = () => {
   const { user } = useAuth();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [showNewExpense, setShowNewExpense] = useState(false);
   
   // Form state
@@ -55,48 +68,37 @@ export const ExpenseManagement = () => {
   const [expenseDate, setExpenseDate] = useState<Date>();
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchExpenses();
-    }
-  }, [user]);
+  // Use TanStack Query hooks
+  const { data: expensesData, isLoading: expensesLoading } = useExpenses({
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  });
 
-  const fetchExpenses = async () => {
-    if (!user) return;
+  const createExpenseMutation = useCreateExpense({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Expense submitted successfully",
+      });
+      // Reset form
+      setCategory("");
+      setAmount("");
+      setCurrency("USD");
+      setDescription("");
+      setExpenseDate(undefined);
+      setReceiptFile(null);
+      setShowNewExpense(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to submit expense",
+        variant: "destructive",
+      });
+    },
+  });
 
-    const { data, error } = await supabase
-      .from('expenses')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching expenses:', error);
-      return;
-    }
-
-    setExpenses(data || []);
-  };
-
-  const uploadReceipt = async (file: File): Promise<string | null> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user!.id}/${Date.now()}.${fileExt}`;
-
-    const { data, error } = await supabase.storage
-      .from('receipts')
-      .upload(fileName, file);
-
-    if (error) {
-      console.error('Error uploading receipt:', error);
-      return null;
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('receipts')
-      .getPublicUrl(fileName);
-
-    return publicUrl;
-  };
+  const expenses = expensesData?.data?.data || [];
 
   const handleSubmitExpense = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,75 +122,33 @@ export const ExpenseManagement = () => {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      let receiptUrl = null;
-      
-      if (receiptFile) {
-        receiptUrl = await uploadReceipt(receiptFile);
-        if (!receiptUrl) {
-          throw new Error('Failed to upload receipt');
-        }
-      }
-
-      const { error } = await supabase
-        .from('expenses')
-        .insert({
-          user_id: user.id,
-          category: category as any,
-          amount: amountNum,
-          currency,
-          description,
-          expense_date: format(expenseDate, 'yyyy-MM-dd'),
-          receipt_url: receiptUrl,
-          status: 'submitted'
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Expense submitted successfully",
-      });
-
-      // Reset form
-      setCategory("");
-      setAmount("");
-      setCurrency("USD");
-      setDescription("");
-      setExpenseDate(undefined);
-      setReceiptFile(null);
-      setShowNewExpense(false);
-      
-      fetchExpenses();
-    } catch (error) {
-      console.error('Error submitting expense:', error);
-      toast({
-        title: "Error",
-        description: "Failed to submit expense",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    createExpenseMutation.mutate({
+      category,
+      amount: amountNum,
+      currency,
+      description,
+      expenseDate: format(expenseDate, 'yyyy-MM-dd'),
+      receiptUrl: receiptFile ? URL.createObjectURL(receiptFile) : undefined,
+      status: 'PENDING'
+    });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-success';
-      case 'rejected': return 'bg-destructive';
-      case 'submitted': return 'bg-info';
-      case 'reimbursed': return 'bg-primary';
-      case 'draft': return 'bg-secondary';
+      case 'APPROVED': return 'bg-success';
+      case 'REJECTED': return 'bg-destructive';
+      case 'PENDING': return 'bg-info';
+      case 'REIMBURSED': return 'bg-primary';
+      case 'DRAFT': return 'bg-secondary';
       default: return 'bg-secondary';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'approved': return <CheckCircle className="h-4 w-4" />;
-      case 'rejected': return <XCircle className="h-4 w-4" />;
-      case 'reimbursed': return <DollarSign className="h-4 w-4" />;
+      case 'APPROVED': return <CheckCircle className="h-4 w-4" />;
+      case 'REJECTED': return <XCircle className="h-4 w-4" />;
+      case 'REIMBURSED': return <DollarSign className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
@@ -251,7 +211,7 @@ export const ExpenseManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Pending</p>
-                <p className="text-2xl font-bold">{getExpensesByStatus('submitted').length}</p>
+                <p className="text-2xl font-bold">{getExpensesByStatus('PENDING').length}</p>
                 <p className="text-xs text-muted-foreground">Awaiting approval</p>
               </div>
               <Clock className="h-8 w-8 text-warning" />
@@ -264,7 +224,7 @@ export const ExpenseManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Approved</p>
-                <p className="text-2xl font-bold">{getExpensesByStatus('approved').length}</p>
+                <p className="text-2xl font-bold">{getExpensesByStatus('APPROVED').length}</p>
                 <p className="text-xs text-muted-foreground">Ready for reimbursement</p>
               </div>
               <CheckCircle className="h-8 w-8 text-success" />
@@ -277,7 +237,7 @@ export const ExpenseManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Reimbursed</p>
-                <p className="text-2xl font-bold">{getExpensesByStatus('reimbursed').length}</p>
+                <p className="text-2xl font-bold">{getExpensesByStatus('REIMBURSED').length}</p>
                 <p className="text-xs text-muted-foreground">Completed</p>
               </div>
               <DollarSign className="h-8 w-8 text-primary" />
@@ -411,10 +371,10 @@ export const ExpenseManagement = () => {
                 </Button>
                 <Button 
                   type="submit"
-                  disabled={isLoading}
+                  disabled={createExpenseMutation.isPending}
                   className="bg-gradient-primary hover:opacity-90 transition-all duration-300"
                 >
-                  {isLoading ? "Submitting..." : "Submit Expense"}
+                  {createExpenseMutation.isPending ? "Submitting..." : "Submit Expense"}
                 </Button>
               </div>
             </form>
@@ -455,12 +415,12 @@ export const ExpenseManagement = () => {
                       {expense.description}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {format(new Date(expense.expense_date), 'MMM d, yyyy')} • 
-                      Submitted {format(new Date(expense.created_at), 'MMM d, yyyy')}
+                      {format(new Date(expense.expenseDate), 'MMM d, yyyy')} • 
+                      Submitted {format(new Date(expense.createdAt), 'MMM d, yyyy')}
                     </div>
-                    {expense.rejection_reason && (
+                    {expense.rejectionReason && (
                       <div className="text-sm text-destructive mt-1">
-                        Rejection reason: {expense.rejection_reason}
+                        Rejection reason: {expense.rejectionReason}
                       </div>
                     )}
                   </div>
@@ -468,12 +428,12 @@ export const ExpenseManagement = () => {
                     <div className="text-lg font-semibold">
                       {expense.currency} {expense.amount.toFixed(2)}
                     </div>
-                    {expense.receipt_url && (
+                    {expense.receiptUrl && (
                       <Button
                         variant="outline"
                         size="sm"
                         className="mt-2 bg-gradient-glass backdrop-blur-glass-sm border-white/20 hover:bg-white/20"
-                        onClick={() => window.open(expense.receipt_url!, '_blank')}
+                        onClick={() => window.open(expense.receiptUrl!, '_blank')}
                       >
                         View Receipt
                       </Button>

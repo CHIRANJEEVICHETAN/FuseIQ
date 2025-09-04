@@ -25,11 +25,11 @@ interface DashboardHeaderProps {
 export const DashboardHeader = ({ user, onLogout }: DashboardHeaderProps) => {
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'super_admin': return 'bg-destructive';
-      case 'org_admin': return 'bg-warning';
-      case 'dept_admin': return 'bg-info';
-      case 'project_manager': return 'bg-success';
-      case 'team_lead': return 'bg-primary';
+      case 'SUPER_ADMIN': return 'bg-destructive';
+      case 'ORG_ADMIN': return 'bg-warning';
+      case 'DEPT_ADMIN': return 'bg-info';
+      case 'PROJECT_MANAGER': return 'bg-success';
+      case 'TEAM_LEAD': return 'bg-primary';
       default: return 'bg-secondary';
     }
   };

@@ -25,20 +25,47 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { Database } from "@/types/database";
+import { useTasks, useCreateTask, useUpdateTask } from "@/lib/hooks/use-api";
 
-type Task = Database['public']['Tables']['tasks']['Row'] & {
+interface Task {
+  id: string;
+  title: string;
+  description?: string;
+  status: 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE' | 'BLOCKED';
+  priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+  projectId: string;
+  assigneeId?: string;
+  reporterId: string;
+  estimatedHours?: number;
+  actualHours?: number;
+  dueDate?: string;
+  createdAt: string;
+  updatedAt: string;
   assignee?: {
-    full_name: string | null;
-    avatar_url: string | null;
+    id: string;
+    fullName: string;
+    email: string;
   };
   project?: {
+    id: string;
     name: string;
   };
-};
+}
 
-type Project = Database['public']['Tables']['projects']['Row'];
+interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  status: string;
+  priority: string;
+  startDate?: string;
+  endDate?: string;
+  budget?: number;
+  departmentId: string;
+  managerId: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 interface Column {
   id: string;
@@ -49,90 +76,87 @@ interface Column {
 
 export const TaskBoard = () => {
   const { user } = useAuth();
-  const [columns, setColumns] = useState<Column[]>([
-    { id: "todo", title: "To Do", color: "bg-secondary", tasks: [] },
-    { id: "in_progress", title: "In Progress", color: "bg-info", tasks: [] },
-    { id: "review", title: "Review", color: "bg-warning", tasks: [] },
-    { id: "done", title: "Done", color: "bg-success", tasks: [] }
-  ]);
-  
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [showNewTask, setShowNewTask] = useState(false);
   
   // Form state
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
-    priority: "medium" as const,
-    project_id: "",
-    assignee_id: "",
-    estimated_hours: ""
+    priority: "MEDIUM" as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
+    projectId: "",
+    assigneeId: "",
+    estimatedHours: ""
   });
 
-  useEffect(() => {
-    if (user) {
-      fetchTasks();
-      fetchProjects();
-    }
-  }, [user]);
+  // Use TanStack Query hooks
+  const { data: tasksData, isLoading: tasksLoading } = useTasks({
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  });
 
-  const fetchTasks = async () => {
-    if (!user) return;
+  const createTaskMutation = useCreateTask({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Task created successfully",
+      });
+      // Reset form
+      setNewTask({
+        title: "",
+        description: "",
+        priority: "MEDIUM" as 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT',
+        projectId: "",
+        assigneeId: "",
+        estimatedHours: ""
+      });
+      setShowNewTask(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to create task",
+        variant: "destructive",
+      });
+    },
+  });
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .select(`
-        *,
-        assignee:profiles!tasks_assignee_id_fkey (
-          full_name,
-          avatar_url
-        ),
-        project:projects (
-          name
-        )
-      `)
-      .order('created_at', { ascending: false });
+  const updateTaskMutation = useUpdateTask({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Task status updated",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update task status",
+        variant: "destructive",
+      });
+    },
+  });
 
-    if (error) {
-      console.error('Error fetching tasks:', error);
-      return;
-    }
+  const tasks = tasksData?.data?.data || [];
+  const projects: Project[] = []; // TODO: Implement project fetching
 
-    // Group tasks by status
-    const tasksByStatus = (data || []).reduce((acc, task) => {
-      if (!acc[task.status]) acc[task.status] = [];
-      acc[task.status].push(task);
-      return acc;
-    }, {} as Record<string, Task[]>);
+  // Group tasks by status
+  const tasksByStatus = tasks.reduce((acc, task) => {
+    if (!acc[task.status]) acc[task.status] = [];
+    acc[task.status].push(task);
+    return acc;
+  }, {} as Record<string, Task[]>);
 
-    setColumns(prev => prev.map(col => ({
-      ...col,
-      tasks: tasksByStatus[col.id] || []
-    })));
-  };
-
-  const fetchProjects = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('projects')
-      .select('*')
-      .eq('status', 'active')
-      .order('name');
-
-    if (error) {
-      console.error('Error fetching projects:', error);
-      return;
-    }
-
-    setProjects(data || []);
-  };
+  const columns: Column[] = [
+    { id: "TODO", title: "To Do", color: "bg-secondary", tasks: tasksByStatus["TODO"] || [] },
+    { id: "IN_PROGRESS", title: "In Progress", color: "bg-info", tasks: tasksByStatus["IN_PROGRESS"] || [] },
+    { id: "REVIEW", title: "Review", color: "bg-warning", tasks: tasksByStatus["REVIEW"] || [] },
+    { id: "DONE", title: "Done", color: "bg-success", tasks: tasksByStatus["DONE"] || [] }
+  ];
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user || !newTask.title || !newTask.project_id) {
+    if (!user || !newTask.title || !newTask.projectId) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -141,92 +165,39 @@ export const TaskBoard = () => {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .insert({
-          title: newTask.title,
-          description: newTask.description || null,
-          priority: newTask.priority,
-          project_id: newTask.project_id,
-          assignee_id: newTask.assignee_id || null,
-          reporter_id: user.id,
-          estimated_hours: newTask.estimated_hours ? parseFloat(newTask.estimated_hours) : null,
-          status: 'todo'
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Task created successfully",
-      });
-
-      // Reset form
-      setNewTask({
-        title: "",
-        description: "",
-        priority: "medium",
-        project_id: "",
-        assignee_id: "",
-        estimated_hours: ""
-      });
-      setShowNewTask(false);
-      
-      fetchTasks();
-    } catch (error) {
-      console.error('Error creating task:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create task",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    createTaskMutation.mutate({
+      title: newTask.title,
+      description: newTask.description || undefined,
+      priority: newTask.priority,
+      projectId: newTask.projectId,
+      assigneeId: newTask.assigneeId || undefined,
+      estimatedHours: newTask.estimatedHours ? parseFloat(newTask.estimatedHours) : undefined,
+      status: 'TODO'
+    });
   };
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: newStatus as any })
-        .eq('id', taskId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Task status updated",
-      });
-
-      fetchTasks();
-    } catch (error) {
-      console.error('Error updating task status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update task status",
-        variant: "destructive",
-      });
-    }
+    updateTaskMutation.mutate({
+      id: taskId,
+      data: { status: newStatus as 'TODO' | 'IN_PROGRESS' | 'REVIEW' | 'DONE' | 'BLOCKED' }
+    });
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "high": return "bg-destructive";
-      case "medium": return "bg-warning";
-      case "low": return "bg-success";
-      case "urgent": return "bg-red-600";
+      case "HIGH": return "bg-destructive";
+      case "MEDIUM": return "bg-warning";
+      case "LOW": return "bg-success";
+      case "URGENT": return "bg-red-600";
       default: return "bg-secondary";
     }
   };
 
-  const formatTime = (minutes: number | null) => {
-    if (!minutes) return "0h 0m";
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    return `${hours}h ${mins}m`;
+  const formatTime = (hours: number | null | undefined) => {
+    if (!hours) return "0h 0m";
+    const wholeHours = Math.floor(hours);
+    const minutes = Math.round((hours - wholeHours) * 60);
+    return `${wholeHours}h ${minutes}m`;
   };
 
   return (
@@ -282,7 +253,7 @@ export const TaskBoard = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="task-project">Project</Label>
-                  <Select value={newTask.project_id} onValueChange={(value) => setNewTask(prev => ({ ...prev, project_id: value }))}>
+                  <Select value={newTask.projectId} onValueChange={(value) => setNewTask(prev => ({ ...prev, projectId: value }))}>
                     <SelectTrigger className="bg-gradient-glass backdrop-blur-glass-sm border-white/20">
                       <SelectValue placeholder="Select project" />
                     </SelectTrigger>
@@ -298,15 +269,15 @@ export const TaskBoard = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="task-priority">Priority</Label>
-                  <Select value={newTask.priority} onValueChange={(value: any) => setNewTask(prev => ({ ...prev, priority: value }))}>
+                  <Select value={newTask.priority} onValueChange={(value: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT') => setNewTask(prev => ({ ...prev, priority: value }))}>
                     <SelectTrigger className="bg-gradient-glass backdrop-blur-glass-sm border-white/20">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-gradient-glass backdrop-blur-glass border-white/20">
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
+                      <SelectItem value="LOW">Low</SelectItem>
+                      <SelectItem value="MEDIUM">Medium</SelectItem>
+                      <SelectItem value="HIGH">High</SelectItem>
+                      <SelectItem value="URGENT">Urgent</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -319,8 +290,8 @@ export const TaskBoard = () => {
                   type="number"
                   step="0.5"
                   placeholder="0"
-                  value={newTask.estimated_hours}
-                  onChange={(e) => setNewTask(prev => ({ ...prev, estimated_hours: e.target.value }))}
+                  value={newTask.estimatedHours}
+                  onChange={(e) => setNewTask(prev => ({ ...prev, estimatedHours: e.target.value }))}
                   className="bg-gradient-glass backdrop-blur-glass-sm border-white/20 focus:border-primary/50 transition-all duration-300"
                 />
               </div>
@@ -336,10 +307,10 @@ export const TaskBoard = () => {
                 </Button>
                 <Button 
                   type="submit"
-                  disabled={isLoading}
+                  disabled={createTaskMutation.isPending}
                   className="bg-gradient-primary hover:opacity-90 transition-all duration-300"
                 >
-                  {isLoading ? "Creating..." : "Create Task"}
+                  {createTaskMutation.isPending ? "Creating..." : "Create Task"}
                 </Button>
               </DialogFooter>
             </form>
@@ -404,7 +375,7 @@ export const TaskBoard = () => {
                       </Badge>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Clock className="h-3 w-3 mr-1" />
-                        {formatTime(task.actual_hours ? task.actual_hours * 60 : 0)}
+                        {formatTime(task.actualHours)}
                       </div>
                     </div>
 
@@ -413,13 +384,12 @@ export const TaskBoard = () => {
                         {task.assignee ? (
                           <>
                             <Avatar className="h-6 w-6">
-                              <AvatarImage src={task.assignee.avatar_url || undefined} />
                               <AvatarFallback className="text-xs bg-gradient-primary text-white">
-                                {task.assignee.full_name?.charAt(0) || 'U'}
+                                {task.assignee.fullName?.charAt(0) || 'U'}
                               </AvatarFallback>
                             </Avatar>
                             <span className="text-sm text-muted-foreground">
-                              {task.assignee.full_name || 'Unassigned'}
+                              {task.assignee.fullName || 'Unassigned'}
                             </span>
                           </>
                         ) : (

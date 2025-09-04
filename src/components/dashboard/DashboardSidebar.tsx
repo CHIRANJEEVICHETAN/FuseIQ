@@ -77,7 +77,7 @@ export const DashboardSidebar = ({ activeSection, onSectionChange, userRole }: D
       icon: <UserCog className="h-5 w-5" />,
       active: activeSection === "users",
       onClick: () => onSectionChange("users"),
-      requiredRoles: ['super_admin', 'org_admin', 'dept_admin']
+      requiredRoles: ['SUPER_ADMIN', 'ORG_ADMIN', 'DEPT_ADMIN']
     },
     {
       name: "Team",

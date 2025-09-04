@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
-import { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
-import { Database } from '@/types/database'
-import { Profile, AuthContextType } from './types'
+import React, { createContext, useContext, useEffect } from 'react'
+import { apiClient, TokenManager, User, AuthResponse } from '@/lib/api'
+import { useAuthStore } from '@/lib/stores/auth-store'
+import { useCurrentUser } from '@/lib/hooks/use-api'
+import { AuthContextType } from './types'
+import { useQueryClient } from '@tanstack/react-query'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -15,198 +16,123 @@ export const useAuth = () => {
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null)
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { user, setUser, setLoading, clearAuth } = useAuthStore()
+  const queryClient = useQueryClient()
+  
+  // Use TanStack Query to fetch current user only when authenticated
+  const isAuthenticated = TokenManager.isAuthenticated()
+  const { data: userData, isLoading, error } = useCurrentUser({
+    enabled: isAuthenticated,
+    retry: false,
+  } as Parameters<typeof useCurrentUser>[0])
+
+  // Update Zustand store when user data changes
+  useEffect(() => {
+    if (userData?.data) {
+      setUser(userData.data)
+    } else if (error && isAuthenticated) {
+      // Token might be invalid, clear it
+      TokenManager.clearTokens()
+      clearAuth()
+    }
+  }, [userData, error, setUser, clearAuth, isAuthenticated])
+
+  // Update loading state
+  useEffect(() => {
+    setLoading(isLoading)
+  }, [isLoading, setLoading])
 
   useEffect(() => {
-    let mounted = true
-
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        console.log('[AuthContext] getInitialSession:', { session, error });
-        if (error) {
-          console.error('[AuthContext] Error getting session:', error)
-          if (mounted) {
-            setLoading(false)
-          }
-          return
-        }
-
-        if (mounted) {
-          setSession(session)
-          setUser(session?.user ?? null)
-          console.log('[AuthContext] setSession/setUser:', { session, user: session?.user });
-          if (session?.user) {
-            await fetchProfile(session.user.id)
-          } else {
-            setLoading(false)
-          }
-        }
-      } catch (error) {
-        console.error('[AuthContext] Error in getInitialSession:', error)
-        if (mounted) {
-          setLoading(false)
-        }
-      }
+    // Listen for auth logout events
+    const handleLogout = () => {
+      clearAuth()
     }
 
-    getInitialSession()
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AuthContext] Auth state changed:', event, session?.user?.email)
-      if (!mounted) return
-      setSession(session)
-      setUser(session?.user ?? null)
-      console.log('[AuthContext] onAuthStateChange setSession/setUser:', { session, user: session?.user });
-      if (session?.user) {
-        await fetchProfile(session.user.id)
-      } else {
-        setProfile(null)
-        setLoading(false)
-      }
-    })
+    window.addEventListener('auth:logout', handleLogout)
 
     return () => {
-      mounted = false
-      subscription.unsubscribe()
+      window.removeEventListener('auth:logout', handleLogout)
     }
-  }, [])
+  }, [clearAuth])
 
-  const fetchProfile = async (userId: string) => {
-    try {
-      console.log('[AuthContext] Fetching profile for user:', userId)
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-      console.log('[AuthContext] fetchProfile result:', { profile, error });
-      if (error) {
-        console.error('[AuthContext] Error fetching profile:', error)
-        if (error.code === 'PGRST116') {
-          console.log('[AuthContext] Profile not found, creating new profile...')
-          const { data: user } = await supabase.auth.getUser()
-          if (user.user) {
-            const { data: newProfile, error: createError } = await supabase
-              .from('profiles')
-              .insert({
-                id: userId,
-                email: user.user.email!,
-                full_name: user.user.user_metadata?.full_name || user.user.email,
-                role: 'employee',
-                is_active: true
-              })
-              .select()
-              .single()
-            console.log('[AuthContext] Profile creation result:', { newProfile, createError });
-            if (createError) {
-              console.error('[AuthContext] Error creating profile:', createError)
-            } else {
-              setProfile(newProfile)
-              console.log('[AuthContext] Profile created successfully:', newProfile)
-            }
-          }
-        }
-      }
-      if (profile) {
-        console.log('[AuthContext] Profile loaded:', profile)
-        setProfile(profile)
-      } else {
-        console.warn('[AuthContext] No profile loaded after fetchProfile')
-      }
-    } catch (error) {
-      console.error('[AuthContext] Error in fetchProfile:', error)
-    } finally {
-      setLoading(false)
-      console.log('[AuthContext] setLoading(false) in fetchProfile')
-    }
-  }
 
   const signIn = async (email: string, password: string) => {
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      return { error }
-    } catch (error) {
-      return { error }
+      const authResponse = await apiClient.login({ email, password })
+      setUser(authResponse.user)
+      return { error: null }
+    } catch (error: unknown) {
+      console.error('[AuthContext] Sign in error:', error)
+      return { error: (error as Error).message || 'Sign in failed' }
+    } finally {
+      setLoading(false)
     }
   }
 
   const signUp = async (email: string, password: string, userData: Record<string, unknown>) => {
     setLoading(true)
     try {
-      const { error } = await supabase.auth.signUp({
+      const authResponse = await apiClient.register({
         email,
         password,
-        options: {
-          data: {
-            full_name: userData.full_name,
-            role: userData.role || 'employee'
-          },
-        },
+        fullName: userData.full_name as string || email,
+        phone: userData.phone as string,
+        position: userData.position as string,
+        departmentId: userData.departmentId as string
       })
-      return { error }
-    } catch (error) {
-      return { error }
+      setUser(authResponse.user)
+      return { error: null }
+    } catch (error: unknown) {
+      console.error('[AuthContext] Sign up error:', error)
+      return { error: (error as Error).message || 'Sign up failed' }
+    } finally {
+      setLoading(false)
     }
   }
 
   const signOut = async () => {
     setLoading(true)
-    await supabase.auth.signOut()
-    setProfile(null)
-    setLoading(false)
+    try {
+      await apiClient.logout()
+    } catch (error) {
+      console.error('[AuthContext] Logout error:', error)
+    } finally {
+      // Clear all cached data
+      queryClient.clear()
+      // Clear auth state and persisted data
+      clearAuth()
+      setLoading(false)
+    }
   }
 
-  const updateProfile = async (updates: Partial<Profile>) => {
+  const updateProfile = async (updates: Partial<User>) => {
     if (!user) return { error: 'No user logged in' }
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', user.id)
-
-    if (!error) {
-      setProfile(prev => prev ? { ...prev, ...updates } : null)
+    try {
+      const updatedUser = await apiClient.updateUser(user.id, updates)
+      setUser(updatedUser)
+      return { error: null }
+    } catch (error: unknown) {
+      console.error('[AuthContext] Update profile error:', error)
+      return { error: (error as Error).message || 'Update failed' }
     }
-
-    return { error }
   }
 
   const promoteToSuperAdmin = async (email: string) => {
     try {
-      const { error } = await supabase.rpc('promote_to_super_admin', {
-        user_email: email
-      })
-      
-      if (!error) {
-        // Refresh profile if it's the current user
-        if (user?.email === email) {
-          await fetchProfile(user.id)
-        }
-      }
-      
-      return { error }
-    } catch (error) {
-      return { error }
+      // This would need to be implemented in the backend
+      // For now, just return an error indicating it's not implemented
+      return { error: 'Super admin promotion not implemented yet' }
+    } catch (error: unknown) {
+      console.error('[AuthContext] Promote to super admin error:', error)
+      return { error: (error as Error).message || 'Promotion failed' }
     }
   }
 
   const value = {
     user,
-    profile,
-    session,
-    loading,
+    loading: isLoading,
     signIn,
     signUp,
     signOut,

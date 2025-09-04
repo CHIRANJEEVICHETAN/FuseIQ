@@ -11,7 +11,7 @@ import { ExpenseManagement } from "@/components/expenses/ExpenseManagement";
 import { UserManagement } from "@/components/admin/UserManagement";
 
 const Index = () => {
-  const { profile, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [activeSection, setActiveSection] = useState("dashboard");
 
   const handleLogout = async () => {
@@ -49,7 +49,7 @@ const Index = () => {
     }
   };
 
-  if (!profile) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -61,10 +61,10 @@ const Index = () => {
     <div className="min-h-screen">
       <DashboardHeader 
         user={{
-          name: profile.full_name || profile.email,
-          email: profile.email,
-          avatar: profile.avatar_url || undefined,
-          role: profile.role
+          name: user.fullName || user.email,
+          email: user.email,
+          avatar: undefined, // No avatar in current User type
+          role: user.role
         }} 
         onLogout={handleLogout} 
       />
@@ -72,7 +72,7 @@ const Index = () => {
         <DashboardSidebar 
           activeSection={activeSection} 
           onSectionChange={setActiveSection}
-          userRole={profile.role}
+          userRole={user.role}
         />
         <main className="flex-1 bg-gradient-glass backdrop-blur-glass">
           {renderContent()}

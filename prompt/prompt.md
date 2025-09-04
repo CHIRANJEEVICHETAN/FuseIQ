@@ -17,18 +17,31 @@
 
 #### Multi-Level Permission System
 
--   **Hierarchical Roles**: Super Admin → Organization Admin → Department Admin → Project Manager → Team Lead → Employee → Contractor
+-   **Hierarchical Roles**: Super Admin → Organization Admin → Department Admin → HR → Project Manager → Team Lead → Employee → Contractor → Intern → Trainee
 -   **Dynamic Permission Assignment**: Custom permissions per role with inheritance
 -   **Department-based Access**: Role permissions scoped to specific departments
 -   **Project-level Permissions**: Granular access control per project/workspace
 -   **Time-based Access**: Temporary role assignments with expiration dates
 -   **IP-based Restrictions**: Location-based access controls for sensitive operations
 
+#### Role Definitions
+
+-   **Super Admin**: Full system access, user management, system configuration, backup/restore, all permissions
+-   **Organization Admin**: Organization-wide management, department creation, user role assignment, financial oversight
+-   **Department Admin**: Department-specific management, team oversight, project approval, department reporting
+-   **HR**: Human resources operations, employee records, leave management, attendance tracking, recruitment processes
+-   **Project Manager**: Project planning, task assignment, team coordination, project reporting, resource allocation
+-   **Team Lead**: Team management, task oversight, team reporting, member performance tracking
+-   **Employee**: Standard user access, task management, time tracking, personal reporting
+-   **Contractor**: Limited access, assigned project tasks, time tracking, basic reporting
+-   **Intern**: Restricted access, assigned learning tasks, time tracking, mentor oversight
+-   **Trainee**: Entry-level access, training tasks, supervised time tracking, progress monitoring
+
 #### Permission Categories
 
 -   **System Administration**: User management, system configuration, backup/restore
 -   **Financial Operations**: Expense approval, budget management, financial reporting
--   **HR Operations**: Leave management, attendance tracking, employee records
+-   **HR Operations**: Leave management, attendance tracking, employee records, recruitment, performance reviews
 -   **Project Management**: Task creation, project planning, resource allocation
 -   **Reporting Access**: Different report levels (personal, team, department, organization)
 -   **Integration Management**: API access, third-party service configuration

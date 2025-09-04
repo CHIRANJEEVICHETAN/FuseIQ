@@ -20,28 +20,37 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { useLeaveRequests, useCreateLeaveRequest } from "@/lib/hooks/use-api";
 import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 
 interface LeaveRequest {
   id: string;
-  leave_type: 'annual' | 'sick' | 'maternity' | 'paternity' | 'bereavement' | 'study' | 'unpaid';
-  start_date: string;
-  end_date: string;
-  days_requested: number;
-  reason: string | null;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
-  approved_by: string | null;
-  approved_at: string | null;
-  rejection_reason: string | null;
-  created_at: string;
+  userId: string;
+  leaveType: string;
+  startDate: string;
+  endDate: string;
+  days: number;
+  reason?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  approverId?: string;
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+  approver?: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
 }
 
 export const LeaveManagement = () => {
-  const { user, profile } = useAuth();
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
   const [showNewRequest, setShowNewRequest] = useState(false);
   
   // Form state
@@ -50,28 +59,35 @@ export const LeaveManagement = () => {
   const [endDate, setEndDate] = useState<Date>();
   const [reason, setReason] = useState("");
 
-  useEffect(() => {
-    if (user) {
-      fetchLeaveRequests();
-    }
-  }, [user]);
+  // Use TanStack Query hooks
+  const { data: leaveRequestsData, isLoading: leaveRequestsLoading } = useLeaveRequests({
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  });
 
-  const fetchLeaveRequests = async () => {
-    if (!user) return;
+  const createLeaveRequestMutation = useCreateLeaveRequest({
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Leave request submitted successfully",
+      });
+      // Reset form
+      setLeaveType("");
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setReason("");
+      setShowNewRequest(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to submit leave request",
+        variant: "destructive",
+      });
+    },
+  });
 
-    const { data, error } = await supabase
-      .from('leave_requests')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching leave requests:', error);
-      return;
-    }
-
-    setLeaveRequests(data || []);
-  };
+  const leaveRequests = leaveRequestsData?.data?.data || [];
 
   const handleSubmitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,63 +112,32 @@ export const LeaveManagement = () => {
 
     const daysRequested = differenceInDays(endDate, startDate) + 1;
 
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('leave_requests')
-        .insert({
-          user_id: user.id,
-          leave_type: leaveType as any,
-          start_date: format(startDate, 'yyyy-MM-dd'),
-          end_date: format(endDate, 'yyyy-MM-dd'),
-          days_requested: daysRequested,
-          reason: reason || null,
-          status: 'pending'
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Leave request submitted successfully",
-      });
-
-      // Reset form
-      setLeaveType("");
-      setStartDate(undefined);
-      setEndDate(undefined);
-      setReason("");
-      setShowNewRequest(false);
-      
-      fetchLeaveRequests();
-    } catch (error) {
-      console.error('Error submitting leave request:', error);
-      toast({
-        title: "Error",
-        description: "Failed to submit leave request",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    createLeaveRequestMutation.mutate({
+      leaveType: leaveType as 'ANNUAL' | 'SICK' | 'MATERNITY' | 'PATERNITY' | 'BEREAVEMENT' | 'STUDY' | 'UNPAID',
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      endDate: format(endDate, 'yyyy-MM-dd'),
+      days: daysRequested,
+      reason: reason || undefined,
+      status: 'PENDING'
+    });
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'bg-success';
-      case 'rejected': return 'bg-destructive';
-      case 'pending': return 'bg-warning';
-      case 'cancelled': return 'bg-secondary';
+      case 'APPROVED': return 'bg-success';
+      case 'REJECTED': return 'bg-destructive';
+      case 'PENDING': return 'bg-warning';
+      case 'CANCELLED': return 'bg-secondary';
       default: return 'bg-secondary';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'approved': return <CheckCircle className="h-4 w-4" />;
-      case 'rejected': return <XCircle className="h-4 w-4" />;
-      case 'pending': return <Clock className="h-4 w-4" />;
-      case 'cancelled': return <AlertCircle className="h-4 w-4" />;
+      case 'APPROVED': return <CheckCircle className="h-4 w-4" />;
+      case 'REJECTED': return <XCircle className="h-4 w-4" />;
+      case 'PENDING': return <Clock className="h-4 w-4" />;
+      case 'CANCELLED': return <AlertCircle className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
     }
   };
@@ -332,10 +317,10 @@ export const LeaveManagement = () => {
                 </Button>
                 <Button 
                   type="submit"
-                  disabled={isLoading}
+                  disabled={createLeaveRequestMutation.isPending}
                   className="bg-gradient-primary hover:opacity-90 transition-all duration-300"
                 >
-                  {isLoading ? "Submitting..." : "Submit Request"}
+                  {createLeaveRequestMutation.isPending ? "Submitting..." : "Submit Request"}
                 </Button>
               </div>
             </form>
@@ -360,9 +345,9 @@ export const LeaveManagement = () => {
                     <div className="flex items-center space-x-2 mb-2">
                       <Badge 
                         variant="outline" 
-                        className={`${getLeaveTypeColor(request.leave_type)} text-white border-white/20 text-xs`}
+                        className={`${getLeaveTypeColor(request.leaveType)} text-white border-white/20 text-xs`}
                       >
-                        {request.leave_type.replace('_', ' ').toUpperCase()}
+                        {request.leaveType.replace('_', ' ').toUpperCase()}
                       </Badge>
                       <Badge 
                         variant="outline" 
@@ -373,19 +358,19 @@ export const LeaveManagement = () => {
                       </Badge>
                     </div>
                     <div className="text-sm font-medium">
-                      {format(new Date(request.start_date), 'MMM d, yyyy')} - {format(new Date(request.end_date), 'MMM d, yyyy')}
+                      {format(new Date(request.startDate), 'MMM d, yyyy')} - {format(new Date(request.endDate), 'MMM d, yyyy')}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {request.days_requested} day(s) • Submitted {format(new Date(request.created_at), 'MMM d, yyyy')}
+                      {request.days} day(s) • Submitted {format(new Date(request.createdAt), 'MMM d, yyyy')}
                     </div>
                     {request.reason && (
                       <div className="text-sm text-muted-foreground mt-1">
                         Reason: {request.reason}
                       </div>
                     )}
-                    {request.rejection_reason && (
+                    {request.rejectionReason && (
                       <div className="text-sm text-destructive mt-1">
-                        Rejection reason: {request.rejection_reason}
+                        Rejection reason: {request.rejectionReason}
                       </div>
                     )}
                   </div>

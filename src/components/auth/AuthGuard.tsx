@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext'
-import { LoginForm } from './LoginForm'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 interface AuthGuardProps {
   children: React.ReactNode
@@ -10,7 +11,14 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
   children, 
   requiredRole = [] 
 }) => {
-  const { user, profile, loading } = useAuth()
+  const { user, loading } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!user && !loading) {
+      navigate('/login')
+    }
+  }, [user, loading, navigate])
 
   if (loading) {
     return (
@@ -20,11 +28,11 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
     )
   }
 
-  if (!user || !profile) {
-    return <LoginForm />
+  if (!user) {
+    return null // Will redirect to /login via useEffect
   }
 
-  if (requiredRole.length > 0 && !requiredRole.includes(profile.role)) {
+  if (requiredRole.length > 0 && !requiredRole.includes(user.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

@@ -20,185 +20,129 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { useUsers, useUpdateUser } from "@/lib/hooks/use-api";
 import { format } from "date-fns";
-import { Database } from "@/types/database";
 import { cn } from "@/lib/utils";
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
-type Department = Database['public']['Tables']['departments']['Row'];
+// Types for our Express backend
+interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  departmentId?: string;
+  phone?: string;
+  position?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  department?: {
+    id: string;
+    name: string;
+  };
+}
+
+interface Department {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export const UserManagement = () => {
-  const { user, profile } = useAuth();
-  const [users, setUsers] = useState<Profile[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
 
-  useEffect(() => {
-    if (user && profile) {
-      fetchUsers();
-      fetchDepartments();
-    }
-  }, [user, profile]);
+  // Use TanStack Query hooks
+  const { data: usersData, isLoading: usersLoading, error: usersError } = useUsers({
+    search: searchTerm || undefined,
+    role: selectedRole !== "all" ? selectedRole : undefined,
+    departmentId: selectedDepartment !== "all" ? selectedDepartment : undefined,
+  });
 
-  const fetchUsers = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select(`
-        *,
-        departments (
-          name
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching users:', error);
-      return;
-    }
-
-    setUsers(data || []);
-  };
-
-  const fetchDepartments = async () => {
-    const { data, error } = await supabase
-      .from('departments')
-      .select('*')
-      .eq('is_active', true)
-      .order('name');
-
-    if (error) {
-      console.error('Error fetching departments:', error);
-      return;
-    }
-
-    setDepartments(data || []);
-  };
-
-  const updateUserRole = async (userId: string, newRole: string) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole as any })
-        .eq('id', userId);
-
-      if (error) throw error;
-
+  const updateUserMutation = useUpdateUser({
+    onSuccess: () => {
       toast({
         title: "Success",
-        description: "User role updated successfully",
+        description: "User updated successfully",
       });
-
-      fetchUsers();
-    } catch (error) {
-      console.error('Error updating user role:', error);
+    },
+    onError: (error) => {
       toast({
         title: "Error",
-        description: "Failed to update user role",
+        description: "Failed to update user",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const users = usersData?.data?.data || [];
+  const departments: Department[] = []; // TODO: Implement department fetching
+
+  const updateUserRole = async (userId: string, newRole: string) => {
+    updateUserMutation.mutate({
+      id: userId,
+      data: { role: newRole }
+    });
   };
 
   const updateUserDepartment = async (userId: string, departmentId: string | null) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ department_id: departmentId })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "User department updated successfully",
-      });
-
-      fetchUsers();
-    } catch (error) {
-      console.error('Error updating user department:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update user department",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    updateUserMutation.mutate({
+      id: userId,
+      data: { departmentId }
+    });
   };
 
   const toggleUserStatus = async (userId: string, isActive: boolean) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_active: !isActive })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `User ${!isActive ? 'activated' : 'deactivated'} successfully`,
-      });
-
-      fetchUsers();
-    } catch (error) {
-      console.error('Error updating user status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update user status",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    updateUserMutation.mutate({
+      id: userId,
+      data: { isActive: !isActive }
+    });
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'super_admin': return 'bg-destructive';
-      case 'org_admin': return 'bg-warning';
-      case 'dept_admin': return 'bg-info';
-      case 'project_manager': return 'bg-success';
-      case 'team_lead': return 'bg-primary';
-      case 'employee': return 'bg-secondary';
-      case 'contractor': return 'bg-muted';
+      case 'SUPER_ADMIN': return 'bg-destructive';
+      case 'ORG_ADMIN': return 'bg-warning';
+      case 'DEPT_ADMIN': return 'bg-info';
+      case 'PROJECT_MANAGER': return 'bg-success';
+      case 'TEAM_LEAD': return 'bg-primary';
+      case 'EMPLOYEE': return 'bg-secondary';
+      case 'CONTRACTOR': return 'bg-muted';
+      case 'INTERN': return 'bg-cyan-500';
+      case 'TRAINEE': return 'bg-pink-500';
+      case 'HR': return 'bg-purple-500';
       default: return 'bg-secondary';
     }
   };
 
-  const canManageUser = (targetUser: Profile) => {
-    if (!profile) return false;
+  const canManageUser = (targetUser: User) => {
+    if (!user) return false;
     
     // Super admin can manage everyone
-    if (profile.role === 'super_admin') return true;
+    if (user?.role === 'SUPER_ADMIN') return true;
     
     // Org admin can manage everyone except super admin
-    if (profile.role === 'org_admin' && targetUser.role !== 'super_admin') return true;
+    if (user?.role === 'ORG_ADMIN' && targetUser.role !== 'SUPER_ADMIN') return true;
     
     // Dept admin can manage users in their department (except admins)
-    if (profile.role === 'dept_admin' && 
-        targetUser.department_id === profile.department_id &&
-        !['super_admin', 'org_admin'].includes(targetUser.role)) return true;
+    if (user?.role === 'DEPT_ADMIN' && 
+        targetUser.departmentId === user.departmentId &&
+        !['SUPER_ADMIN', 'ORG_ADMIN'].includes(targetUser.role)) return true;
     
     return false;
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.employee_id?.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredUsers = users.filter(userItem => {
+    const matchesSearch = userItem.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         userItem.email.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesRole = selectedRole === "all" || user.role === selectedRole;
-    const matchesDepartment = selectedDepartment === "all" || user.department_id === selectedDepartment;
+    const matchesRole = selectedRole === "all" || userItem.role === selectedRole;
+    const matchesDepartment = selectedDepartment === "all" || userItem.departmentId === selectedDepartment;
     
     return matchesSearch && matchesRole && matchesDepartment;
   });
@@ -240,13 +184,13 @@ export const UserManagement = () => {
               </SelectTrigger>
               <SelectContent className="bg-gradient-glass backdrop-blur-glass border-white/20">
                 <SelectItem value="all">All Roles</SelectItem>
-                <SelectItem value="super_admin">Super Admin</SelectItem>
-                <SelectItem value="org_admin">Org Admin</SelectItem>
-                <SelectItem value="dept_admin">Dept Admin</SelectItem>
-                <SelectItem value="project_manager">Project Manager</SelectItem>
-                <SelectItem value="team_lead">Team Lead</SelectItem>
-                <SelectItem value="employee">Employee</SelectItem>
-                <SelectItem value="contractor">Contractor</SelectItem>
+                <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
+                <SelectItem value="ORG_ADMIN">Org Admin</SelectItem>
+                <SelectItem value="DEPT_ADMIN">Dept Admin</SelectItem>
+                <SelectItem value="PROJECT_MANAGER">Project Manager</SelectItem>
+                <SelectItem value="TEAM_LEAD">Team Lead</SelectItem>
+                <SelectItem value="EMPLOYEE">Employee</SelectItem>
+                <SelectItem value="CONTRACTOR">Contractor</SelectItem>
               </SelectContent>
             </Select>
 
@@ -283,29 +227,28 @@ export const UserManagement = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {filteredUsers.map((user) => (
-              <div key={user.id} className="p-4 bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg hover:bg-white/20 transition-all duration-300">
+            {filteredUsers.map((userItem) => (
+              <div key={userItem.id} className="p-4 bg-gradient-glass backdrop-blur-glass-sm border border-white/20 rounded-lg hover:bg-white/20 transition-all duration-300">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={user.avatar_url || undefined} />
                       <AvatarFallback className="bg-gradient-primary text-white">
-                        {user.full_name?.charAt(0) || user.email.charAt(0)}
+                        {userItem.fullName?.charAt(0) || userItem.email.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     
                     <div className="flex-1">
                       <div className="flex items-center space-x-2">
                         <h3 className="font-semibold">
-                          {user.full_name || 'No name'}
+                          {userItem.fullName || 'No name'}
                         </h3>
                         <Badge 
                           variant="outline" 
-                          className={`${getRoleColor(user.role)} text-white border-white/20 text-xs`}
+                          className={`${getRoleColor(userItem.role)} text-white border-white/20 text-xs`}
                         >
-                          {user.role.replace('_', ' ').toUpperCase()}
+                          {userItem.role.replace('_', ' ').toUpperCase()}
                         </Badge>
-                        {!user.is_active && (
+                        {!userItem.isActive && (
                           <Badge variant="outline" className="bg-destructive text-white border-white/20 text-xs">
                             INACTIVE
                           </Badge>
@@ -315,68 +258,65 @@ export const UserManagement = () => {
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
                         <div className="flex items-center">
                           <Mail className="h-3 w-3 mr-1" />
-                          {user.email}
+                          {userItem.email}
                         </div>
-                        {user.employee_id && (
-                          <div className="flex items-center">
-                            <Shield className="h-3 w-3 mr-1" />
-                            {user.employee_id}
-                          </div>
-                        )}
-                        {user.phone && (
+                        {userItem.phone && (
                           <div className="flex items-center">
                             <Phone className="h-3 w-3 mr-1" />
-                            {user.phone}
+                            {userItem.phone}
                           </div>
                         )}
                         <div className="flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Joined {format(new Date(user.created_at), 'MMM yyyy')}
+                          Joined {format(new Date(userItem.createdAt), 'MMM yyyy')}
                         </div>
                       </div>
                       
-                      {user.position && (
+                      {userItem.position && (
                         <div className="text-sm text-muted-foreground mt-1">
-                          {user.position}
-                          {departments.find(d => d.id === user.department_id) && (
-                            <span> • {departments.find(d => d.id === user.department_id)?.name}</span>
+                          {userItem.position}
+                          {userItem.departmentId && (
+                            <span> • {userItem.departmentId}</span>
                           )}
                         </div>
                       )}
                     </div>
                   </div>
                   
-                  {canManageUser(user) && (
+                  {canManageUser(userItem) && (
                     <div className="flex items-center space-x-2">
                       <Select
-                        value={user.role}
-                        onValueChange={(value) => updateUserRole(user.id, value)}
-                        disabled={isLoading}
+                        value={userItem.role}
+                        onValueChange={(value) => updateUserRole(userItem.id, value)}
+                        disabled={updateUserMutation.isPending}
                       >
                         <SelectTrigger className="w-40 bg-gradient-glass backdrop-blur-glass-sm border-white/20">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-gradient-glass backdrop-blur-glass border-white/20">
-                          <SelectItem value="employee">Employee</SelectItem>
-                          <SelectItem value="contractor">Contractor</SelectItem>
-                          <SelectItem value="team_lead">Team Lead</SelectItem>
-                          <SelectItem value="project_manager">Project Manager</SelectItem>
-                          {(profile?.role === 'super_admin' || profile?.role === 'org_admin') && (
-                            <SelectItem value="dept_admin">Dept Admin</SelectItem>
+                          <SelectItem value="TRAINEE">Trainee</SelectItem>
+                          <SelectItem value="INTERN">Intern</SelectItem>
+                          <SelectItem value="EMPLOYEE">Employee</SelectItem>
+                          <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+                          <SelectItem value="TEAM_LEAD">Team Lead</SelectItem>
+                          <SelectItem value="PROJECT_MANAGER">Project Manager</SelectItem>
+                          <SelectItem value="HR">HR</SelectItem>
+                          {(user?.role === 'SUPER_ADMIN' || user?.role === 'ORG_ADMIN') && (
+                            <SelectItem value="DEPT_ADMIN">Dept Admin</SelectItem>
                           )}
-                          {profile?.role === 'super_admin' && (
+                          {user?.role === 'SUPER_ADMIN' && (
                             <>
-                              <SelectItem value="org_admin">Org Admin</SelectItem>
-                              <SelectItem value="super_admin">Super Admin</SelectItem>
+                              <SelectItem value="ORG_ADMIN">Org Admin</SelectItem>
+                              <SelectItem value="SUPER_ADMIN">Super Admin</SelectItem>
                             </>
                           )}
                         </SelectContent>
                       </Select>
 
                       <Select
-                        value={user.department_id || "none"}
-                        onValueChange={(value) => updateUserDepartment(user.id, value === "none" ? null : value)}
-                        disabled={isLoading}
+                        value={userItem.departmentId || "none"}
+                        onValueChange={(value) => updateUserDepartment(userItem.id, value === "none" ? null : value)}
+                        disabled={updateUserMutation.isPending}
                       >
                         <SelectTrigger className="w-40 bg-gradient-glass backdrop-blur-glass-sm border-white/20">
                           <SelectValue placeholder="Department" />
@@ -394,14 +334,14 @@ export const UserManagement = () => {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => toggleUserStatus(user.id, user.is_active)}
-                        disabled={isLoading}
+                        onClick={() => toggleUserStatus(userItem.id, userItem.isActive)}
+                        disabled={updateUserMutation.isPending}
                         className={cn(
                           "bg-gradient-glass backdrop-blur-glass-sm border-white/20 hover:bg-white/20",
-                          !user.is_active && "bg-destructive/20"
+                          !userItem.isActive && "bg-destructive/20"
                         )}
                       >
-                        {user.is_active ? 'Deactivate' : 'Activate'}
+                        {userItem.isActive ? 'Deactivate' : 'Activate'}
                       </Button>
                     </div>
                   )}

@@ -1,0 +1,281 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ORG_ADMIN
+  DEPT_ADMIN
+  PROJECT_MANAGER
+  TEAM_LEAD
+  EMPLOYEE
+  CONTRACTOR
+  INTERN
+  TRAINEE
+  HR
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  DONE
+  BLOCKED
+}
+
+enum PriorityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  HALF_DAY
+  WORK_FROM_HOME
+}
+
+enum LeaveType {
+  ANNUAL
+  SICK
+  MATERNITY
+  PATERNITY
+  BEREAVEMENT
+  STUDY
+  UNPAID
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ExpenseCategory {
+  TRAVEL
+  MEALS
+  ACCOMMODATION
+  OFFICE_SUPPLIES
+  CLIENT_ENTERTAINMENT
+  OTHER
+}
+
+enum ExpenseStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  REIMBURSED
+}
+
+model User {
+  id          String   @id @default(uuid())
+  email       String   @unique
+  password    String
+  fullName    String?  @map("full_name")
+  avatarUrl   String?  @map("avatar_url")
+  role        UserRole @default(EMPLOYEE)
+  departmentId String? @map("department_id")
+  phone       String?
+  position    String?
+  hireDate    DateTime? @map("hire_date")
+  employeeId  String?  @unique @map("employee_id")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  department       Department?    @relation(fields: [departmentId], references: [id])
+  managedDepartment Department[]  @relation("DepartmentManager")
+  managedProjects  Project[]      @relation("ProjectManager")
+  assignedTasks    Task[]         @relation("TaskAssignee")
+  reportedTasks    Task[]         @relation("TaskReporter")
+  timeEntries      TimeEntry[]
+  attendance       Attendance[]
+  leaveRequests    LeaveRequest[]
+  expenses         Expense[]
+  approvedLeaves   LeaveRequest[] @relation("LeaveApprover")
+  approvedExpenses Expense[]      @relation("ExpenseApprover")
+
+  @@map("users")
+}
+
+model Department {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  managerId   String?  @map("manager_id")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  manager  User?     @relation("DepartmentManager", fields: [managerId], references: [id])
+  users    User[]
+  projects Project[]
+
+  @@map("departments")
+}
+
+model Project {
+  id            String        @id @default(uuid())
+  name          String
+  description   String?
+  status        ProjectStatus @default(PLANNING)
+  priority      PriorityLevel @default(MEDIUM)
+  startDate     DateTime?     @map("start_date")
+  endDate       DateTime?     @map("end_date")
+  budget        Decimal?      @db.Decimal(12, 2)
+  departmentId  String        @map("department_id")
+  managerId     String        @map("manager_id")
+  githubRepoUrl String?       @map("github_repo_url")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  department  Department  @relation(fields: [departmentId], references: [id])
+  manager     User        @relation("ProjectManager", fields: [managerId], references: [id])
+  tasks       Task[]
+  timeEntries TimeEntry[]
+  expenses    Expense[]
+
+  @@map("projects")
+}
+
+model Task {
+  id                 String        @id @default(uuid())
+  title              String
+  description        String?
+  status             TaskStatus    @default(TODO)
+  priority           PriorityLevel @default(MEDIUM)
+  projectId          String        @map("project_id")
+  assigneeId         String?       @map("assignee_id")
+  reporterId         String        @map("reporter_id")
+  parentTaskId       String?       @map("parent_task_id")
+  estimatedHours     Decimal?      @map("estimated_hours") @db.Decimal(5, 2)
+  actualHours        Decimal?      @map("actual_hours") @db.Decimal(5, 2)
+  dueDate            DateTime?     @map("due_date")
+  githubIssueNumber  Int?          @map("github_issue_number")
+  githubPrNumber     Int?          @map("github_pr_number")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  project     Project     @relation(fields: [projectId], references: [id])
+  assignee    User?       @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  reporter    User        @relation("TaskReporter", fields: [reporterId], references: [id])
+  parentTask  Task?       @relation("TaskHierarchy", fields: [parentTaskId], references: [id])
+  subTasks    Task[]      @relation("TaskHierarchy")
+  timeEntries TimeEntry[]
+
+  @@map("tasks")
+}
+
+model TimeEntry {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  taskId          String?   @map("task_id")
+  projectId       String?   @map("project_id")
+  description     String?
+  startTime       DateTime  @map("start_time")
+  endTime         DateTime? @map("end_time")
+  durationMinutes Int?      @map("duration_minutes")
+  isBillable      Boolean   @default(false) @map("is_billable")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  user    User     @relation(fields: [userId], references: [id])
+  task    Task?    @relation(fields: [taskId], references: [id])
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@map("time_entries")
+}
+
+model Attendance {
+  id                   String           @id @default(uuid())
+  userId               String           @map("user_id")
+  date                 DateTime         @db.Date
+  clockIn              DateTime?        @map("clock_in")
+  clockOut             DateTime?        @map("clock_out")
+  breakDurationMinutes Int              @default(0) @map("break_duration_minutes")
+  totalHours           Decimal?         @map("total_hours") @db.Decimal(4, 2)
+  status               AttendanceStatus @default(PRESENT)
+  location             String?
+  notes                String?
+  createdAt            DateTime         @default(now()) @map("created_at")
+  updatedAt            DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, date])
+  @@map("attendance")
+}
+
+model LeaveRequest {
+  id               String         @id @default(uuid())
+  userId           String         @map("user_id")
+  leaveType        LeaveType      @map("leave_type")
+  startDate        DateTime       @map("start_date") @db.Date
+  endDate          DateTime       @map("end_date") @db.Date
+  daysRequested    Int            @map("days_requested")
+  reason           String?
+  status           ApprovalStatus @default(PENDING)
+  approvedBy       String?        @map("approved_by")
+  approvedAt       DateTime?      @map("approved_at")
+  rejectionReason  String?        @map("rejection_reason")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  user     User  @relation(fields: [userId], references: [id])
+  approver User? @relation("LeaveApprover", fields: [approvedBy], references: [id])
+
+  @@map("leave_requests")
+}
+
+model Expense {
+  id              String          @id @default(uuid())
+  userId          String          @map("user_id")
+  category        ExpenseCategory
+  amount          Decimal         @db.Decimal(10, 2)
+  currency        String          @default("USD")
+  description     String
+  expenseDate     DateTime        @map("expense_date") @db.Date
+  receiptUrl      String?         @map("receipt_url")
+  status          ExpenseStatus   @default(DRAFT)
+  approvedBy      String?         @map("approved_by")
+  approvedAt      DateTime?       @map("approved_at")
+  rejectionReason String?         @map("rejection_reason")
+  projectId       String?         @map("project_id")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+
+  // Relations
+  user     User     @relation(fields: [userId], references: [id])
+  approver User?    @relation("ExpenseApprover", fields: [approvedBy], references: [id])
+  project  Project? @relation(fields: [projectId], references: [id])
+
+  @@map("expenses")
+}
