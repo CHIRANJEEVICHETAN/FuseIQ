@@ -148,7 +148,7 @@ router.get('/ready', async (_req: Request, res: Response) => {
 /**
  * Liveness probe (for Kubernetes/Docker)
  */
-router.get('/live', (_req: Request, res: Response) => {
+router.get('/', (_req: Request, res: Response) => {
   // Simple liveness check - if the server can respond, it's alive
   res.json({
     status: 'alive',
