@@ -32,38 +32,51 @@ export type UserQuery = z.infer<typeof userQuerySchema>;
 /**
  * Get list of users with filtering and pagination
  */
-export async function getUsers(query: Partial<UserQuery> = {}): Promise<{
-    users: User[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
+export async function getUsers(query: Record<string, unknown> = {}): Promise<{
+    data: User[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+        hasNext: boolean;
+        hasPrev: boolean;
+    };
 }> {
     try {
         const prismaClient = getPrismaClient();
-        const validatedQuery = userQuerySchema.parse(query);
-        
-        const { page, limit, search, role, departmentId, isActive, sortBy, sortOrder } = validatedQuery;
+
+        // Parse and validate query parameters
+        const page = Math.max(1, parseInt(String(query['page'] || 1)));
+        const limit = Math.min(100, Math.max(1, parseInt(String(query['limit'] || 10))));
+        const search = query['search'] ? String(query['search']) : undefined;
+        const role = query['role'] ? String(query['role']) : undefined;
+        const departmentId = query['departmentId'] ? String(query['departmentId']) : undefined;
+        const isActive = query['isActive'] !== undefined ? query['isActive'] === 'true' : undefined;
+        const sortBy = ['createdAt', 'updatedAt', 'fullName', 'email'].includes(String(query['sortBy'] || ''))
+            ? String(query['sortBy']) : 'createdAt';
+        const sortOrder = query['sortOrder'] === 'asc' ? 'asc' : 'desc';
+
         const skip = (page - 1) * limit;
 
         // Build where clause
         const where: Record<string, unknown> = {};
-        
+
         if (search) {
             where['OR'] = [
                 { fullName: { contains: search, mode: 'insensitive' } },
                 { email: { contains: search, mode: 'insensitive' } }
             ];
         }
-        
-        if (role) {
+
+        if (role && Object.values(UserRole).includes(role as UserRole)) {
             where['role'] = role;
         }
-        
+
         if (departmentId) {
             where['departmentId'] = departmentId;
         }
-        
+
         if (isActive !== undefined) {
             where['isActive'] = isActive;
         }
@@ -82,12 +95,18 @@ export async function getUsers(query: Partial<UserQuery> = {}): Promise<{
             prismaClient.user.count({ where })
         ]);
 
+        const totalPages = Math.ceil(total / limit);
+
         return {
-            users,
-            total,
-            page,
-            limit,
-            totalPages: Math.ceil(total / limit)
+            data: users,
+            pagination: {
+                page,
+                limit,
+                total,
+                totalPages,
+                hasNext: page < totalPages,
+                hasPrev: page > 1
+            }
         };
     } catch (error) {
         console.error('Get users error:', error);
@@ -101,7 +120,7 @@ export async function getUsers(query: Partial<UserQuery> = {}): Promise<{
 export async function getUserById(userId: string): Promise<User | null> {
     try {
         const prismaClient = getPrismaClient();
-        
+
         const user = await prismaClient.user.findUnique({
             where: { id: userId },
             include: {
@@ -120,7 +139,7 @@ export async function getUserById(userId: string): Promise<User | null> {
  * Update user profile
  */
 export async function updateUserProfile(
-    userId: string, 
+    userId: string,
     updates: {
         fullName?: string;
         phone?: string;
@@ -130,7 +149,7 @@ export async function updateUserProfile(
 ): Promise<User> {
     try {
         const prismaClient = getPrismaClient();
-        
+
         const user = await prismaClient.user.update({
             where: { id: userId },
             data: {
@@ -155,7 +174,7 @@ export async function updateUserProfile(
 export async function updateUserRole(userId: string, newRole: UserRole, _updatedBy: string): Promise<User> {
     try {
         const prismaClient = getPrismaClient();
-        
+
         // Check if user exists
         const existingUser = await prismaClient.user.findUnique({
             where: { id: userId }
@@ -192,7 +211,7 @@ export async function updateUserRole(userId: string, newRole: UserRole, _updated
 export async function updateUserDepartment(userId: string, departmentId: string | null, _updatedBy: string): Promise<User> {
     try {
         const prismaClient = getPrismaClient();
-        
+
         // Validate department if provided
         if (departmentId) {
             const department = await prismaClient.department.findUnique({
@@ -230,7 +249,7 @@ export async function updateUserDepartment(userId: string, departmentId: string 
 export async function toggleUserStatus(userId: string, isActive: boolean, _updatedBy: string): Promise<User> {
     try {
         const prismaClient = getPrismaClient();
-        
+
         const user = await prismaClient.user.update({
             where: { id: userId },
             data: {
@@ -255,7 +274,7 @@ export async function toggleUserStatus(userId: string, isActive: boolean, _updat
 export async function deleteUser(userId: string, _deletedBy: string): Promise<void> {
     try {
         const prismaClient = getPrismaClient();
-        
+
         // Soft delete by deactivating the user
         await prismaClient.user.update({
             where: { id: userId },
@@ -282,7 +301,7 @@ export async function getUserStats(): Promise<{
 }> {
     try {
         const prismaClient = getPrismaClient();
-        
+
         const [
             totalUsers,
             activeUsers,
@@ -354,7 +373,7 @@ export async function getUserStats(): Promise<{
 export async function canManageUser(managerId: string, targetUserId: string): Promise<boolean> {
     try {
         const prismaClient = getPrismaClient();
-        
+
         const [manager, targetUser] = await Promise.all([
             prismaClient.user.findUnique({ where: { id: managerId } }),
             prismaClient.user.findUnique({ where: { id: targetUserId } })
@@ -375,7 +394,7 @@ export async function canManageUser(managerId: string, targetUserId: string): Pr
         }
 
         // Dept admin can manage users in their department (except admins)
-        if (manager.role === UserRole.DEPT_ADMIN && 
+        if (manager.role === UserRole.DEPT_ADMIN &&
             targetUser.departmentId === manager.departmentId &&
             !([UserRole.SUPER_ADMIN, UserRole.ORG_ADMIN] as UserRole[]).includes(targetUser.role)) {
             return true;

@@ -14,7 +14,6 @@ import {
   generalRateLimit,
   creationRateLimit,
   validateBody,
-  validateQuery,
   validateParams,
   userSchemas,
   authSchemas,
@@ -83,10 +82,14 @@ router.post('/',
  */
 router.get('/',
   requireAdmin, // Only admins can list users
-  validateQuery(userSchemas.userQuery, true), // Validate query parameters
   async (req: Request, res: Response): Promise<void> => {
     try {
+      console.log('GET /api/users - Query params:', req.query);
       const result = await UserService.getUsers(req.query);
+      console.log('Users service result:', {
+        dataLength: result.data.length,
+        pagination: result.pagination
+      });
       
       res.json(createSuccessResponse(
         result,
@@ -99,6 +102,51 @@ router.get('/',
       res.status(500).json(createErrorResponse(
         'USERS_FETCH_FAILED',
         'Failed to retrieve users',
+        req.path
+      ));
+    }
+  }
+);
+
+/**
+ * GET /api/users/org-chart
+ * Get organizational chart data (accessible to all authenticated users)
+ */
+router.get('/org-chart',
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      console.log('GET /api/users/org-chart - Query params:', req.query);
+      console.log('Current user:', req.user?.email, 'Role:', req.user?.role);
+
+      // All authenticated users can see org chart, but with filtered data based on their role
+      const result = await UserService.getUsers(req.query);
+
+      // Filter sensitive information for non-admin users
+      if (req.user?.role && !['SUPER_ADMIN', 'ORG_ADMIN', 'DEPT_ADMIN', 'HR'].includes(req.user.role)) {
+        result.data = result.data.map(user => ({
+          ...user,
+          // Remove sensitive fields for non-admin users
+          phone: null,
+          // Keep basic info needed for org chart
+        }));
+      }
+
+      console.log('Org chart service result:', {
+        dataLength: result.data.length,
+        pagination: result.pagination
+      });
+
+      res.json(createSuccessResponse(
+        result,
+        'Organizational chart data retrieved successfully',
+        req.path
+      ));
+    } catch (error: unknown) {
+      console.error('Get org chart error:', error);
+
+      res.status(500).json(createErrorResponse(
+        'ORG_CHART_FETCH_FAILED',
+        'Failed to retrieve organizational chart data',
         req.path
       ));
     }
