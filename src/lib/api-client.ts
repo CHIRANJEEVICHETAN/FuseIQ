@@ -156,6 +156,8 @@ export const api = {
 
 // Error handling utility
 export const handleApiError = (error: unknown): string => {
+  console.error('API Error:', error);
+
   if ((error as { response?: { data?: { error?: { message?: string }; message?: string } } }).response?.data?.error?.message) {
     return (error as { response: { data: { error: { message: string } } } }).response.data.error.message;
   }

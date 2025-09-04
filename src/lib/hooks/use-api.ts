@@ -21,7 +21,25 @@ export const useCurrentUser = (options?: UseQueryOptions<ApiResponse<User>>) => 
 export const useUsers = (params: QueryParams = {}, options?: UseQueryOptions<ApiResponse<PaginatedResponse<User>>>) => {
   return useQuery({
     queryKey: queryKeys.users.list(params),
-    queryFn: () => api.get<PaginatedResponse<User>>('/users', { params }),
+    queryFn: async () => {
+      console.log('useUsers - Making API call with params:', params);
+      const response = await api.get<PaginatedResponse<User>>('/users', { params });
+      console.log('useUsers - API response:', response);
+      return response;
+    },
+    ...options,
+  });
+};
+
+export const useOrgChartUsers = (params: QueryParams = {}, options?: UseQueryOptions<ApiResponse<PaginatedResponse<User>>>) => {
+  return useQuery({
+    queryKey: [...queryKeys.users.all, 'org-chart', params],
+    queryFn: async () => {
+      console.log('useOrgChartUsers - Making API call with params:', params);
+      const response = await api.get<PaginatedResponse<User>>('/users/org-chart', { params });
+      console.log('useOrgChartUsers - API response:', response);
+      return response;
+    },
     ...options,
   });
 };
@@ -47,7 +65,7 @@ interface CreateUserRequest {
 
 export const useCreateUser = (options?: UseMutationOptions<ApiResponse<User>, Error, CreateUserRequest>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data) => api.post<User>('/users', data),
     onSuccess: () => {
@@ -63,16 +81,16 @@ export const useCreateUser = (options?: UseMutationOptions<ApiResponse<User>, Er
 
 export const useUpdateUser = (options?: UseMutationOptions<ApiResponse<User>, Error, { id: string; data: Partial<User> }>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ id, data }) => api.put<User>(`/users/${id}`, data),
     onSuccess: (response, variables) => {
       // Update user in cache
       queryClient.setQueryData(queryKeys.users.detail(variables.id), response);
-      
+
       // Invalidate users list
       queryClient.invalidateQueries({ queryKey: queryKeys.users.lists() });
-      
+
       // Update current user if it's the same user
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.user });
     },
@@ -129,7 +147,7 @@ export const useTask = (id: string, options?: UseQueryOptions<ApiResponse<Task>>
 
 export const useCreateTask = (options?: UseMutationOptions<ApiResponse<Task>, Error, Partial<Task>>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data) => api.post<Task>('/tasks', data),
     onSuccess: () => {
@@ -144,7 +162,7 @@ export const useCreateTask = (options?: UseMutationOptions<ApiResponse<Task>, Er
 
 export const useUpdateTask = (options?: UseMutationOptions<ApiResponse<Task>, Error, { id: string; data: Partial<Task> }>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ id, data }) => api.put<Task>(`/tasks/${id}`, data),
     onSuccess: (response, variables) => {
@@ -160,7 +178,7 @@ export const useUpdateTask = (options?: UseMutationOptions<ApiResponse<Task>, Er
 
 export const useDeleteTask = (options?: UseMutationOptions<ApiResponse<void>, Error, string>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id) => api.delete<void>(`/tasks/${id}`),
     onSuccess: () => {
@@ -224,7 +242,7 @@ export const useProject = (id: string, options?: UseQueryOptions<ApiResponse<Pro
 
 export const useCreateProject = (options?: UseMutationOptions<ApiResponse<Project>, Error, Partial<Project>>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data) => api.post<Project>('/projects', data),
     onSuccess: () => {
@@ -239,7 +257,7 @@ export const useCreateProject = (options?: UseMutationOptions<ApiResponse<Projec
 
 export const useUpdateProject = (options?: UseMutationOptions<ApiResponse<Project>, Error, { id: string; data: Partial<Project> }>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ id, data }) => api.put<Project>(`/projects/${id}`, data),
     onSuccess: (response, variables) => {
@@ -255,7 +273,7 @@ export const useUpdateProject = (options?: UseMutationOptions<ApiResponse<Projec
 
 export const useDeleteProject = (options?: UseMutationOptions<ApiResponse<void>, Error, string>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id) => api.delete<void>(`/projects/${id}`),
     onSuccess: () => {
@@ -323,7 +341,7 @@ export const useAttendanceRecord = (id: string, options?: UseQueryOptions<ApiRes
 
 export const useCheckIn = (options?: UseMutationOptions<ApiResponse<Attendance>, Error, { location?: string; notes?: string }>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data) => api.post<Attendance>('/attendance/check-in', data),
     onSuccess: () => {
@@ -338,7 +356,7 @@ export const useCheckIn = (options?: UseMutationOptions<ApiResponse<Attendance>,
 
 export const useCheckOut = (options?: UseMutationOptions<ApiResponse<Attendance>, Error, { notes?: string }>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data) => api.post<Attendance>('/attendance/check-out', data),
     onSuccess: () => {
@@ -399,7 +417,7 @@ export const useLeaveRequest = (id: string, options?: UseQueryOptions<ApiRespons
 
 export const useCreateLeaveRequest = (options?: UseMutationOptions<ApiResponse<LeaveRequest>, Error, Partial<LeaveRequest>>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data) => api.post<LeaveRequest>('/leave', data),
     onSuccess: () => {
@@ -415,7 +433,7 @@ export const useCreateLeaveRequest = (options?: UseMutationOptions<ApiResponse<L
 
 export const useUpdateLeaveRequest = (options?: UseMutationOptions<ApiResponse<LeaveRequest>, Error, { id: string; data: Partial<LeaveRequest> }>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ id, data }) => api.put<LeaveRequest>(`/leave/${id}`, data),
     onSuccess: (response, variables) => {
@@ -431,7 +449,7 @@ export const useUpdateLeaveRequest = (options?: UseMutationOptions<ApiResponse<L
 
 export const useDeleteLeaveRequest = (options?: UseMutationOptions<ApiResponse<void>, Error, string>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id) => api.delete<void>(`/leave/${id}`),
     onSuccess: () => {
@@ -463,7 +481,7 @@ export const usePendingLeaveRequests = (options?: UseQueryOptions<ApiResponse<Le
 
 export const useApproveLeaveRequest = (options?: UseMutationOptions<ApiResponse<LeaveRequest>, Error, string>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id) => api.post<LeaveRequest>(`/leave/${id}/approve`),
     onSuccess: () => {
@@ -479,7 +497,7 @@ export const useApproveLeaveRequest = (options?: UseMutationOptions<ApiResponse<
 
 export const useRejectLeaveRequest = (options?: UseMutationOptions<ApiResponse<LeaveRequest>, Error, { id: string; rejectionReason: string }>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ id, rejectionReason }) => api.post<LeaveRequest>(`/leave/${id}/reject`, { rejectionReason }),
     onSuccess: () => {
@@ -539,7 +557,7 @@ export const useExpense = (id: string, options?: UseQueryOptions<ApiResponse<Exp
 
 export const useCreateExpense = (options?: UseMutationOptions<ApiResponse<Expense>, Error, Partial<Expense>>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data) => api.post<Expense>('/expenses', data),
     onSuccess: () => {
@@ -554,7 +572,7 @@ export const useCreateExpense = (options?: UseMutationOptions<ApiResponse<Expens
 
 export const useUpdateExpense = (options?: UseMutationOptions<ApiResponse<Expense>, Error, { id: string; data: Partial<Expense> }>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ id, data }) => api.put<Expense>(`/expenses/${id}`, data),
     onSuccess: (response, variables) => {
@@ -570,7 +588,7 @@ export const useUpdateExpense = (options?: UseMutationOptions<ApiResponse<Expens
 
 export const useDeleteExpense = (options?: UseMutationOptions<ApiResponse<void>, Error, string>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id) => api.delete<void>(`/expenses/${id}`),
     onSuccess: () => {
@@ -601,7 +619,7 @@ export const usePendingExpenses = (options?: UseQueryOptions<ApiResponse<Expense
 
 export const useApproveExpense = (options?: UseMutationOptions<ApiResponse<Expense>, Error, string>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id) => api.post<Expense>(`/expenses/${id}/approve`),
     onSuccess: () => {
@@ -617,7 +635,7 @@ export const useApproveExpense = (options?: UseMutationOptions<ApiResponse<Expen
 
 export const useRejectExpense = (options?: UseMutationOptions<ApiResponse<Expense>, Error, { id: string; rejectionReason: string }>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: ({ id, rejectionReason }) => api.post<Expense>(`/expenses/${id}/reject`, { rejectionReason }),
     onSuccess: () => {
@@ -633,7 +651,7 @@ export const useRejectExpense = (options?: UseMutationOptions<ApiResponse<Expens
 
 export const useReimburseExpense = (options?: UseMutationOptions<ApiResponse<Expense>, Error, string>) => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (id) => api.post<Expense>(`/expenses/${id}/reimburse`),
     onSuccess: () => {

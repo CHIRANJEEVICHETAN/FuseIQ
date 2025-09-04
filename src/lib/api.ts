@@ -278,7 +278,7 @@ class ApiClient {
     search?: string;
     role?: string;
     departmentId?: string;
-  }): Promise<{ users: User[]; pagination: unknown }> {
+  }): Promise<{ users: User[]; total: number; page: number; limit: number; totalPages: number }> {
     const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -289,7 +289,7 @@ class ApiClient {
     }
 
     const endpoint = `/users${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    const response = await this.request<{ users: User[]; pagination: unknown }>(endpoint);
+    const response = await this.request<{ users: User[]; total: number; page: number; limit: number; totalPages: number }>(endpoint);
 
     if (response.success && response.data) {
       return response.data;

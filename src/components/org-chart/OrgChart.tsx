@@ -33,7 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { useUsers } from "@/lib/hooks/use-api";
+import { useOrgChartUsers } from "@/lib/hooks/use-api";
 import { cn } from "@/lib/utils";
 
 interface OrgChartNode {
@@ -59,21 +59,32 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
-  const [viewMode, setViewMode] = useState<'hierarchy' | 'grid'>('hierarchy');
+  const [viewMode, setViewMode] = useState<"hierarchy" | "grid">("hierarchy");
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
-  // Fetch users data
-  const { data: usersData, isLoading } = useUsers({
+  // Fetch users data using org chart endpoint (accessible to all users)
+  const {
+    data: usersData,
+    isLoading,
+    error,
+  } = useOrgChartUsers({
     search: searchTerm || undefined,
     departmentId: selectedDepartment !== "all" ? selectedDepartment : undefined,
   });
 
+  console.log("OrgChart - usersData:", usersData);
+  console.log("OrgChart - isLoading:", isLoading);
+  console.log("OrgChart - error:", error);
+  console.log("OrgChart - current user:", user);
+
   const users = usersData?.data?.data || [];
+  console.log("OrgChart - users array:", users);
 
   // Build organizational hierarchy
   const orgHierarchy = useMemo(() => {
-    const usersList = usersData?.data?.data || [];
+    const usersList = users;
+    console.log("OrgChart - Building hierarchy with users:", usersList);
     if (!usersList.length) return [];
 
     // Create a map of users by ID
@@ -85,7 +96,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
       const node: OrgChartNode = {
         id: user.id,
         name: user.fullName || user.email,
-        position: user.position || 'No Position',
+        position: user.position || "No Position",
         role: user.role,
         department: user.departmentId,
         email: user.email,
@@ -94,7 +105,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
         isActive: user.isActive,
         directReports: [],
         managerId: undefined, // This would come from the backend
-        level: 0
+        level: 0,
       };
       userMap.set(user.id, node);
     });
@@ -102,16 +113,16 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
     // Second pass: build hierarchy (simplified - in real app, you'd have manager relationships)
     // For now, we'll create a simple hierarchy based on roles
     const roleHierarchy = {
-      'SUPER_ADMIN': 0,
-      'ORG_ADMIN': 1,
-      'DEPT_ADMIN': 2,
-      'PROJECT_MANAGER': 3,
-      'TEAM_LEAD': 4,
-      'HR': 2,
-      'EMPLOYEE': 5,
-      'CONTRACTOR': 5,
-      'INTERN': 6,
-      'TRAINEE': 6
+      SUPER_ADMIN: 0,
+      ORG_ADMIN: 1,
+      DEPT_ADMIN: 2,
+      PROJECT_MANAGER: 3,
+      TEAM_LEAD: 4,
+      HR: 2,
+      EMPLOYEE: 5,
+      CONTRACTOR: 5,
+      INTERN: 6,
+      TRAINEE: 6,
     };
 
     userMap.forEach((node) => {
@@ -119,7 +130,9 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
     });
 
     // Sort by level and add to root nodes
-    const sortedNodes = Array.from(userMap.values()).sort((a, b) => a.level - b.level);
+    const sortedNodes = Array.from(userMap.values()).sort(
+      (a, b) => a.level - b.level
+    );
     rootNodes.push(...sortedNodes);
 
     return rootNodes;
@@ -127,22 +140,37 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'SUPER_ADMIN': return 'bg-red-500';
-      case 'ORG_ADMIN': return 'bg-orange-500';
-      case 'DEPT_ADMIN': return 'bg-blue-500';
-      case 'PROJECT_MANAGER': return 'bg-green-500';
-      case 'TEAM_LEAD': return 'bg-purple-500';
-      case 'HR': return 'bg-pink-500';
-      case 'EMPLOYEE': return 'bg-gray-500';
-      case 'CONTRACTOR': return 'bg-yellow-500';
-      case 'INTERN': return 'bg-cyan-500';
-      case 'TRAINEE': return 'bg-indigo-500';
-      default: return 'bg-gray-500';
+      case "SUPER_ADMIN":
+        return "bg-red-500";
+      case "ORG_ADMIN":
+        return "bg-orange-500";
+      case "DEPT_ADMIN":
+        return "bg-blue-500";
+      case "PROJECT_MANAGER":
+        return "bg-green-500";
+      case "TEAM_LEAD":
+        return "bg-purple-500";
+      case "HR":
+        return "bg-pink-500";
+      case "EMPLOYEE":
+        return "bg-gray-500";
+      case "CONTRACTOR":
+        return "bg-yellow-500";
+      case "INTERN":
+        return "bg-cyan-500";
+      case "TRAINEE":
+        return "bg-indigo-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
   const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
   };
 
   const toggleNodeExpansion = (nodeId: string) => {
@@ -161,7 +189,7 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
 
     return (
       <div key={node.id} className="relative">
-        <Card 
+        <Card
           className={cn(
             "w-64 bg-gradient-glass backdrop-blur-glass border-white/20 shadow-glass-sm hover:shadow-glass-md transition-all duration-300 cursor-pointer",
             isSelected && "ring-2 ring-primary",
@@ -179,8 +207,12 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm truncate">{node.name}</h3>
-                  <p className="text-xs text-muted-foreground truncate">{node.position}</p>
+                  <h3 className="font-semibold text-sm truncate">
+                    {node.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {node.position}
+                  </p>
                 </div>
               </div>
               <DropdownMenu>
@@ -213,14 +245,19 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Badge 
-                  variant="outline" 
-                  className={`${getRoleColor(node.role)} text-white border-white/20 text-xs`}
+                <Badge
+                  variant="outline"
+                  className={`${getRoleColor(
+                    node.role
+                  )} text-white border-white/20 text-xs`}
                 >
-                  {node.role.replace('_', ' ')}
+                  {node.role.replace("_", " ")}
                 </Badge>
                 {!node.isActive && (
-                  <Badge variant="outline" className="bg-destructive text-white border-white/20 text-xs">
+                  <Badge
+                    variant="outline"
+                    className="bg-destructive text-white border-white/20 text-xs"
+                  >
                     INACTIVE
                   </Badge>
                 )}
@@ -262,6 +299,25 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <p className="text-muted-foreground mt-4">
+          Loading organizational chart...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-destructive mb-2">
+            Error Loading Organizational Chart
+          </h3>
+          <p className="text-muted-foreground">
+            {error.message ||
+              "Failed to load organizational data. Please try again."}
+          </p>
+        </div>
       </div>
     );
   }
@@ -308,7 +364,10 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
               />
             </div>
 
-            <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+            <Select
+              value={selectedDepartment}
+              onValueChange={setSelectedDepartment}
+            >
               <SelectTrigger className="bg-gradient-glass backdrop-blur-glass-sm border-white/20">
                 <SelectValue placeholder="Filter by department" />
               </SelectTrigger>
@@ -321,7 +380,12 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
               </SelectContent>
             </Select>
 
-            <Select value={viewMode} onValueChange={(value: 'hierarchy' | 'grid') => setViewMode(value)}>
+            <Select
+              value={viewMode}
+              onValueChange={(value: "hierarchy" | "grid") =>
+                setViewMode(value)
+              }
+            >
               <SelectTrigger className="bg-gradient-glass backdrop-blur-glass-sm border-white/20">
                 <SelectValue placeholder="View mode" />
               </SelectTrigger>
@@ -332,7 +396,10 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
             </Select>
 
             <div className="flex items-center justify-end">
-              <Badge variant="outline" className="bg-gradient-glass backdrop-blur-glass-sm border-white/20">
+              <Badge
+                variant="outline"
+                className="bg-gradient-glass backdrop-blur-glass-sm border-white/20"
+              >
                 {orgHierarchy.length} employees
               </Badge>
             </div>
@@ -349,16 +416,14 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {viewMode === 'hierarchy' ? (
+          {viewMode === "hierarchy" ? (
             <div className="space-y-4">
               {orgHierarchy.map((node, index) => renderNode(node, index))}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {orgHierarchy.map((node) => (
-                <div key={node.id}>
-                  {renderNode(node, 0)}
-                </div>
+                <div key={node.id}>{renderNode(node, 0)}</div>
               ))}
             </div>
           )}
@@ -371,8 +436,8 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>Employee Details</span>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => setSelectedNode(null)}
               >
@@ -382,7 +447,9 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
           </CardHeader>
           <CardContent>
             {(() => {
-              const selectedEmployee = orgHierarchy.find(node => node.id === selectedNode);
+              const selectedEmployee = orgHierarchy.find(
+                (node) => node.id === selectedNode
+              );
               if (!selectedEmployee) return null;
 
               return (
@@ -396,13 +463,19 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h3 className="text-xl font-semibold">{selectedEmployee.name}</h3>
-                        <p className="text-muted-foreground">{selectedEmployee.position}</p>
-                        <Badge 
-                          variant="outline" 
-                          className={`${getRoleColor(selectedEmployee.role)} text-white border-white/20 mt-1`}
+                        <h3 className="text-xl font-semibold">
+                          {selectedEmployee.name}
+                        </h3>
+                        <p className="text-muted-foreground">
+                          {selectedEmployee.position}
+                        </p>
+                        <Badge
+                          variant="outline"
+                          className={`${getRoleColor(
+                            selectedEmployee.role
+                          )} text-white border-white/20 mt-1`}
                         >
-                          {selectedEmployee.role.replace('_', ' ')}
+                          {selectedEmployee.role.replace("_", " ")}
                         </Badge>
                       </div>
                     </div>
@@ -449,8 +522,16 @@ export const OrgChart: React.FC<OrgChartProps> = ({ className }) => {
                     <div>
                       <h4 className="font-semibold mb-2">Status</h4>
                       <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${selectedEmployee.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                        <span className="text-sm">{selectedEmployee.isActive ? 'Active' : 'Inactive'}</span>
+                        <div
+                          className={`w-2 h-2 rounded-full ${
+                            selectedEmployee.isActive
+                              ? "bg-green-500"
+                              : "bg-red-500"
+                          }`}
+                        ></div>
+                        <span className="text-sm">
+                          {selectedEmployee.isActive ? "Active" : "Inactive"}
+                        </span>
                       </div>
                     </div>
                   </div>
