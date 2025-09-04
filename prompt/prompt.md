@@ -1,15 +1,17 @@
-# Comprehensive Project Management & Employee Tracking Application Specification
+# EvolveSync - Enterprise HRMS & Project Management Platform Specification
 
 ## Technology Stack
 
--   **Frontend**: Next.js 15+ with App Router, TypeScript, React 18+
--   **Backend**: Next.js API Routes with tRPC for type-safe APIs
--   **Database**: PostgreSQL with Supabase integration
--   **Styling**: TailwindCSS with shadcn/ui components
--   **Authentication**: NextAuth.js with Supabase Auth
--   **Real-time**: Supabase Realtime for live updates
--   **File Storage**: Supabase Storage for documents and assets
--   **Deployment**: Vercel with edge functions
+-   **Frontend**: React 18+ with TypeScript, Vite for build optimization
+-   **Backend**: Node.js with Express.js and TypeScript
+-   **Database**: PostgreSQL with Prisma ORM for type-safe database operations
+-   **Styling**: TailwindCSS with shadcn/ui component library (50+ components)
+-   **Authentication**: JWT-based authentication with bcrypt password hashing
+-   **Real-time**: Redis for session management and real-time features
+-   **File Storage**: Cloud storage integration for documents and assets
+-   **Deployment**: Docker containerization with scalable deployment options
+-   **State Management**: TanStack Query for server state, Zustand for client state
+-   **UI Framework**: Glassmorphism design with responsive mobile-first approach
 
 ## Core System Architecture
 
@@ -134,7 +136,7 @@
 -   **Calendar Integration**: Blocked calendar slots during approved leaves
 -   **Handover Management**: Task reassignment during leave periods
 
-### 6. **NEW: Comprehensive Expense Management System**
+### 6. Comprehensive Expense Management System
 
 #### Admin Configuration
 
@@ -163,7 +165,150 @@
 -   **Reporting Dashboard**: Real-time expense analytics and trend analysis
 -   **Audit Trail**: Complete expense lifecycle tracking for compliance
 
-### 7. Enhanced Integration Ecosystem
+### 7. Employee Lifecycle Management System
+
+#### Recruitment & Onboarding
+
+-   **Applicant Tracking System (ATS)**: Complete recruitment pipeline management
+-   **Job Posting Management**: Multi-platform job posting with template library
+-   **Resume Parsing**: AI-powered resume analysis and candidate scoring
+-   **Interview Scheduling**: Automated scheduling with calendar integration
+-   **Candidate Communication**: Email templates and automated follow-ups
+-   **Background Verification**: Integration with third-party verification services
+-   **Offer Management**: Digital offer letters with e-signature integration
+-   **Onboarding Workflows**: Customizable checklists and document collection
+-   **New Hire Portal**: Self-service portal for document submission
+-   **Buddy System**: Mentor assignment and tracking for new employees
+
+#### Employee Information Management
+
+-   **Comprehensive Employee Profiles**: Personal, professional, and emergency contact information
+-   **Document Management**: Digital storage for contracts, certificates, and personal documents
+-   **Organizational Chart**: Interactive org chart with reporting relationships
+-   **Employee Directory**: Searchable directory with skills and expertise tags
+-   **Contact Management**: Emergency contacts and next of kin information
+-   **Skills Matrix**: Competency tracking and skill gap analysis
+-   **Career Progression**: Career path planning and milestone tracking
+-   **Employee Self-Service**: Profile updates, document uploads, and information requests
+
+#### Offboarding & Exit Management
+
+-   **Exit Interview System**: Structured exit interviews with analytics
+-   **Asset Recovery**: IT equipment and company property tracking
+-   **Knowledge Transfer**: Documentation and handover processes
+-   **Final Settlement**: Automated calculation of final dues and clearances
+-   **Alumni Network**: Maintain relationships with former employees
+-   **Compliance Tracking**: Ensure all legal and regulatory requirements are met
+
+### 8. Built-in Payroll Management System
+
+#### Core Payroll Processing
+
+-   **Automated Payroll Calculation**: Direct integration with attendance, leave, and overtime data
+-   **Salary Structure Management**: Basic salary, allowances, deductions, and variable pay
+-   **Overtime & Holiday Pay**: Automatic calculation based on attendance records
+-   **Bonus Processing**: Performance bonuses, festival bonuses, and ad-hoc payments
+-   **Payroll Approval Workflow**: HR and finance approval before processing
+-   **Digital Payslips**: Secure employee access to detailed pay statements
+-   **Payment Processing**: Bank file generation for salary transfers
+-   **Payroll Calendar**: Monthly/bi-weekly payroll scheduling and processing
+
+#### Tax & Statutory Compliance
+
+-   **Income Tax Calculation**: Automated tax deduction based on employee declarations
+-   **Statutory Deductions**: PF, ESI, Professional Tax, and other mandatory deductions
+-   **Tax Forms Generation**: Form 16, Form 12BA, and other tax certificates
+-   **Compliance Reports**: Monthly PF, ESI, and tax challan generation
+-   **Year-end Processing**: Annual tax statements and investment declarations
+-   **Audit Trail**: Complete payroll processing history for compliance
+
+#### Employee Benefits Management
+
+-   **Health Insurance**: Medical insurance enrollment and premium management
+-   **Provident Fund**: PF contribution tracking and statement generation
+-   **Leave Encashment**: Automatic calculation of leave encashment during exit
+-   **Gratuity Calculation**: Statutory gratuity calculation and tracking
+-   **Reimbursements**: Medical, travel, and other reimbursement processing
+-   **Loan Management**: Employee loan tracking and EMI deductions
+
+### 9. Performance Management System
+
+#### Performance Review Cycles
+
+-   **Configurable Review Cycles**: Annual, semi-annual, quarterly review periods
+-   **360-Degree Feedback**: Multi-source feedback from peers, subordinates, and managers
+-   **Goal Setting & Tracking**: SMART goals with progress monitoring
+-   **Competency Assessment**: Skills and behavioral competency evaluation
+-   **Performance Rating Systems**: Configurable rating scales and calibration
+-   **Review Templates**: Customizable review forms for different roles
+-   **Performance Improvement Plans (PIP)**: Structured improvement planning
+-   **Succession Planning**: Identify and develop high-potential employees
+
+#### Continuous Performance Management
+
+-   **Regular Check-ins**: Scheduled one-on-one meetings and feedback sessions
+-   **Real-time Feedback**: Continuous feedback and recognition system
+-   **Peer Recognition**: Employee recognition and appreciation platform
+-   **Performance Analytics**: Individual and team performance insights
+-   **Career Development**: Individual development plans and career pathing
+-   **Mentoring Programs**: Formal mentoring relationships and tracking
+
+### 10. Learning & Development System
+
+#### Training Management
+
+-   **Learning Management System (LMS)**: Comprehensive training platform
+-   **Course Catalog**: Internal and external training course library
+-   **Skill-based Learning**: Personalized learning paths based on role and skills
+-   **Compliance Training**: Mandatory training tracking and certification
+-   **Virtual Classroom**: Online training delivery with interactive features
+-   **Training Calendar**: Scheduled training sessions and resource booking
+-   **Certification Tracking**: Professional certifications and renewal management
+-   **Training Effectiveness**: ROI measurement and training impact analysis
+
+#### Career Development
+
+-   **Individual Development Plans (IDP)**: Personalized career development planning
+-   **Skill Gap Analysis**: Identify training needs based on role requirements
+-   **Internal Job Posting**: Career advancement opportunities within organization
+-   **Talent Pipeline**: Succession planning and leadership development
+-   **Cross-functional Training**: Exposure to different departments and roles
+-   **External Learning**: Conference, seminar, and external course management
+
+### 11. Employee Engagement & Wellness
+
+#### Engagement Measurement
+
+-   **Employee Surveys**: Pulse surveys, engagement surveys, and exit surveys
+-   **Sentiment Analysis**: AI-powered analysis of employee feedback
+-   **Engagement Metrics**: Comprehensive engagement scoring and benchmarking
+-   **Action Planning**: Data-driven engagement improvement initiatives
+-   **Anonymous Feedback**: Safe channels for honest employee feedback
+-   **Focus Groups**: Structured discussions on specific topics
+
+#### Wellness Programs
+
+-   **Health & Wellness Tracking**: Fitness challenges and health monitoring
+-   **Mental Health Support**: Employee assistance programs and counseling services
+-   **Work-life Balance**: Flexible work arrangements and wellness initiatives
+-   **Wellness Challenges**: Team-based health and fitness competitions
+-   **Stress Management**: Resources and tools for stress reduction
+-   **Ergonomic Assessments**: Workplace safety and ergonomic evaluations
+
+### 12. Compensation Management
+
+#### Salary Administration
+
+-   **Pay Scale Management**: Grade-wise salary structures and bands
+-   **Market Benchmarking**: Salary surveys and competitive analysis
+-   **Merit Increase Planning**: Performance-based salary adjustments
+-   **Promotion Management**: Role changes and salary revisions
+-   **Equity Compensation**: Stock options and equity grant management
+-   **Variable Pay**: Commission, incentives, and performance bonuses
+-   **Pay Equity Analysis**: Gender and diversity pay gap analysis
+-   **Total Rewards Statements**: Comprehensive compensation summaries
+
+### 13. Enhanced Integration Ecosystem
 
 #### Microsoft 365 Integration
 
@@ -182,23 +327,65 @@
     -   Meeting preparation reminders
     -   Calendar-based time blocking
 
-#### AI-Powered Features (Gemini Integration)
+#### Essential Business Integrations
 
--   **Document Intelligence**: Auto-generate meeting notes, project summaries
--   **Task Automation**: AI-suggested task creation from emails/messages
--   **Predictive Analytics**: Project timeline prediction and risk assessment
--   **Content Generation**: Template creation, email drafting, report generation
--   **Smart Scheduling**: AI-optimized meeting scheduling and resource allocation
+-   **Banking Systems**: Direct salary transfer, expense reimbursement processing
+-   **Accounting Software**: QuickBooks, Tally integration for financial data sync
+-   **Email Services**: SMTP integration for notifications and communications
+-   **Calendar Systems**: Google Calendar, Outlook calendar synchronization
+-   **File Storage**: Google Drive, OneDrive integration for document management
+-   **Communication Tools**: Basic Slack, Teams integration for notifications
+
+#### Smart Features
+
+-   **Automated Notifications**: Smart alerts for leave approvals, project deadlines, and payroll
+-   **Report Generation**: Automated monthly reports for attendance, projects, and expenses
+-   **Data Insights**: Basic analytics for employee productivity and project progress
+-   **Template Management**: Pre-built templates for common HR and project documents
+-   **Smart Scheduling**: Conflict detection for meetings and resource allocation
 
 #### Additional Integrations
 
--   **Slack Integration**: Channel notifications, task updates, bot commands
+-   **Slack Integration**: Channel notifications, task updates, bot commands, HR announcements
 -   **Jira Integration**: Issue synchronization for development teams
--   **Salesforce Integration**: Lead and opportunity tracking
--   **Zendesk Integration**: Support ticket management
+-   **Salesforce Integration**: Lead and opportunity tracking, customer project management
+-   **Zendesk Integration**: Support ticket management and customer service
 -   **Time Doctor/Toggl**: Alternative time tracking solutions
+-   **DocuSign**: Digital signature for contracts and HR documents
+-   **Zoom/WebEx**: Video conferencing integration for interviews and meetings
+-   **Google Workspace**: Calendar, Drive, and Gmail integration
 
-### 8. Advanced Documentation System
+### 14. Essential Project Management Features
+
+#### Project Planning & Tracking
+
+-   **Project Dashboard**: Overview of all active projects with status indicators
+-   **Gantt Charts**: Visual timeline with task dependencies and milestones
+-   **Resource Planning**: Team member allocation and workload management
+-   **Budget Tracking**: Project budget monitoring and expense tracking
+-   **Milestone Management**: Key deliverable tracking with deadline alerts
+-   **Project Templates**: Reusable project structures for common work types
+-   **Progress Reporting**: Weekly/monthly project status reports
+-   **Client Management**: Basic client information and project association
+
+#### Team Collaboration
+
+-   **Task Assignment**: Clear task ownership with due dates and priorities
+-   **File Sharing**: Project document storage and version control
+-   **Team Communication**: Project-specific discussions and updates
+-   **Meeting Management**: Meeting scheduling and action item tracking
+-   **Status Updates**: Regular progress updates and blockers identification
+-   **Approval Workflows**: Review and approval processes for deliverables
+
+#### Issue & Risk Management
+
+-   **Issue Tracking**: Problem identification and resolution tracking
+-   **Risk Register**: Basic risk identification and mitigation planning
+-   **Escalation Process**: Automated alerts for overdue tasks and issues
+-   **Change Management**: Project scope and timeline change tracking
+-   **Quality Checkpoints**: Review gates and quality assurance processes
+
+### 15. Advanced Documentation & Knowledge Management
 
 #### Rich Content Editor
 
@@ -218,7 +405,68 @@
 -   **Integration Hub**: Embed content from external sources (Figma, Miro, etc.)
 -   **Offline Support**: Local document editing with cloud synchronization
 
-### 9. Multi-workspace & Multi-tenant Architecture
+#### Knowledge Base
+
+-   **Wiki System**: Collaborative knowledge base with cross-references
+-   **FAQ Management**: Searchable FAQ system with categorization
+-   **Best Practices**: Organizational knowledge and procedure documentation
+-   **Training Materials**: Learning resources and documentation
+-   **Policy Management**: HR policies, procedures, and compliance documents
+-   **Process Documentation**: Workflow documentation and process maps
+
+### 16. Essential Analytics & Reporting
+
+#### HR Analytics
+
+-   **Employee Overview**: Headcount, department distribution, and basic demographics
+-   **Attendance Analytics**: Punctuality trends, absenteeism patterns, and overtime analysis
+-   **Leave Analytics**: Leave utilization, balance tracking, and seasonal trends
+-   **Performance Tracking**: Individual and team performance metrics
+-   **Payroll Analytics**: Salary distribution, cost analysis, and budget tracking
+-   **Recruitment Metrics**: Time-to-hire, source effectiveness, and hiring costs
+-   **Employee Satisfaction**: Basic engagement surveys and feedback analysis
+
+#### Project Analytics
+
+-   **Project Performance**: Timeline adherence, budget utilization, and delivery metrics
+-   **Team Productivity**: Task completion rates, time tracking, and efficiency metrics
+-   **Resource Utilization**: Team member workload and capacity analysis
+-   **Client Satisfaction**: Project feedback and client relationship tracking
+-   **Financial Performance**: Project profitability and cost analysis
+
+#### Business Intelligence
+
+-   **Dashboard Views**: Role-based dashboards for different user types
+-   **Trend Analysis**: Month-over-month and year-over-year comparisons
+-   **Custom Reports**: Flexible report builder for specific business needs
+-   **Export Capabilities**: PDF, Excel, and CSV export options
+-   **Scheduled Reports**: Automated report generation and email delivery
+
+### 17. Compliance & Legal Management
+
+#### Regulatory Compliance
+
+-   **Labor Law Compliance**: Federal, state, and local labor law adherence
+-   **Equal Employment Opportunity (EEO)**: EEO-1 reporting and compliance
+-   **Affirmative Action**: AAP development and tracking
+-   **OSHA Compliance**: Workplace safety and incident reporting
+-   **FLSA Compliance**: Fair Labor Standards Act wage and hour compliance
+-   **FMLA Tracking**: Family and Medical Leave Act administration
+-   **Workers' Compensation**: Injury reporting and claims management
+-   **Immigration Compliance**: I-9 verification and E-Verify integration
+
+#### Audit & Documentation
+
+-   **Audit Trail**: Comprehensive logging of all system activities
+-   **Document Retention**: Automated document lifecycle management
+-   **Policy Management**: HR policy creation, distribution, and acknowledgment
+-   **Compliance Reporting**: Automated regulatory report generation
+-   **Risk Assessment**: Compliance risk identification and mitigation
+-   **Legal Hold**: Litigation hold and e-discovery support
+-   **Data Privacy**: GDPR, CCPA, and other privacy regulation compliance
+-   **Security Compliance**: SOC 2, ISO 27001, and security framework adherence
+
+### 18. Multi-workspace & Multi-tenant Architecture
 
 #### Workspace Features
 
@@ -238,27 +486,67 @@
 -   **API Rate Limiting**: Per-tenant API usage controls
 -   **Custom Domains**: White-label solutions with custom domain support
 
-### 10. Advanced Reporting & Analytics
+#### Enterprise Features
 
-#### Report Types
+-   **Single Sign-On (SSO)**: SAML, OAuth, and Active Directory integration
+-   **Multi-location Support**: Global organizations with multiple offices
+-   **Currency Management**: Multi-currency support for global operations
+-   **Language Localization**: Multi-language interface and content
+-   **Time Zone Management**: Global time zone support and scheduling
+-   **Regional Compliance**: Location-specific compliance and regulations
+
+### 19. Advanced Reporting & Analytics
+
+#### Executive Reporting
 
 -   **Executive Dashboard**: High-level KPIs and business metrics
--   **Project Reports**: Timeline, budget, resource utilization
--   **Employee Performance**: Productivity, attendance, task completion
--   **Financial Reports**: Expense analysis, budget variance, cost centers
--   **Time Reports**: Detailed time tracking and billable hours
--   **Compliance Reports**: Audit trails, security logs, policy adherence
+-   **Workforce Overview**: Headcount, demographics, and organizational health
+-   **Financial Summary**: Payroll costs, benefits expenses, and budget analysis
+-   **Performance Metrics**: Organizational performance and productivity indicators
+-   **Strategic Alignment**: Goal achievement and objective tracking
+-   **Risk Dashboard**: Compliance risks, security alerts, and mitigation status
+
+#### HR Reporting
+
+-   **Employee Reports**: Comprehensive employee data and demographics
+-   **Attendance Reports**: Punctuality, absenteeism, and time tracking analysis
+-   **Leave Reports**: Leave utilization, balance tracking, and trend analysis
+-   **Performance Reports**: Individual and team performance evaluations
+-   **Compensation Reports**: Salary analysis, pay equity, and market benchmarking
+-   **Benefits Reports**: Enrollment, utilization, and cost analysis
+-   **Training Reports**: Learning completion, certification tracking, and ROI
+-   **Recruitment Reports**: Hiring metrics, source effectiveness, and time-to-fill
+
+#### Project Reporting
+
+-   **Project Reports**: Timeline, budget, resource utilization, and deliverables
+-   **Resource Reports**: Team utilization, capacity planning, and allocation
+-   **Financial Reports**: Project costs, expense analysis, and budget variance
+-   **Time Reports**: Detailed time tracking, billable hours, and productivity
+-   **Quality Reports**: Defect tracking, testing metrics, and quality gates
+-   **Risk Reports**: Project risks, issues, and mitigation effectiveness
+
+#### Compliance Reporting
+
+-   **Audit Reports**: System access logs, data changes, and compliance trails
+-   **Regulatory Reports**: EEO-1, OSHA, FLSA, and other mandatory reporting
+-   **Security Reports**: Access violations, security incidents, and threat analysis
+-   **Policy Reports**: Policy acknowledgments, training completion, and violations
+-   **Data Privacy Reports**: GDPR compliance, data requests, and privacy metrics
 
 #### Analytics Features
 
--   **Interactive Dashboards**: Drill-down capabilities with filters
+-   **Interactive Dashboards**: Drill-down capabilities with advanced filters
 -   **Scheduled Reports**: Automated report generation and distribution
--   **Custom Metrics**: User-defined KPIs and calculations
--   **Predictive Analytics**: Trend analysis and forecasting
--   **Export Options**: PDF, Excel, CSV, and API access
+-   **Custom Metrics**: User-defined KPIs and business-specific calculations
+-   **Predictive Analytics**: Trend analysis, forecasting, and predictive modeling
+-   **Benchmarking**: Industry comparisons and best practice analysis
+-   **Real-time Analytics**: Live data updates and instant insights
+-   **Export Options**: PDF, Excel, CSV, PowerBI, and API access
 -   **Mobile Reports**: Responsive dashboard design for mobile devices
+-   **Report Builder**: Drag-and-drop report creation with custom fields
 
-### 11. Enhanced Communication & Collaboration
+### 20. Enhanced Communication & Collaboration
 
 #### Real-time Features
 
@@ -268,6 +556,19 @@
 -   **Status Updates**: Employee status with custom messages
 -   **Presence Indicators**: Online/offline status with last seen
 -   **Screen Sharing**: Built-in screen sharing for quick collaboration
+-   **Team Chat**: Integrated messaging with file sharing and emoji reactions
+-   **Video Conferencing**: Built-in video calls for interviews and meetings
+
+#### HR Communication Features
+
+-   **Company Announcements**: Organization-wide communication and news
+-   **Policy Updates**: Automated policy distribution and acknowledgment tracking
+-   **Employee Surveys**: Pulse surveys, engagement surveys, and feedback collection
+-   **Internal Job Postings**: Career opportunities and internal mobility
+-   **Recognition System**: Peer-to-peer recognition and appreciation platform
+-   **Suggestion Box**: Anonymous feedback and improvement suggestions
+-   **Newsletter System**: Regular communication and company updates
+-   **Event Management**: Company events, training sessions, and social activities
 
 #### Notification System
 
@@ -277,8 +578,21 @@
 -   **Digest Mode**: Daily/weekly notification summaries
 -   **Notification Analytics**: Delivery rates and engagement metrics
 -   **Do Not Disturb**: Configurable quiet hours and notification schedules
+-   **Emergency Alerts**: Critical notifications for urgent situations
+-   **Escalation Rules**: Automatic escalation for unread important messages
 
-### 12. Mobile-First Design & Progressive Web App
+#### Employee Self-Service Portal
+
+-   **Personal Dashboard**: Personalized employee dashboard with relevant information
+-   **Profile Management**: Employee profile updates and document uploads
+-   **Request Management**: Leave requests, expense submissions, and approvals
+-   **Pay Stub Access**: Digital pay stubs and tax documents
+-   **Benefits Enrollment**: Self-service benefits selection and changes
+-   **Training Catalog**: Available training courses and learning paths
+-   **Directory Access**: Employee directory and organizational chart
+-   **Feedback System**: Performance feedback and goal tracking
+
+### 21. Mobile-First Design & Progressive Web App
 
 #### Mobile Features
 
@@ -288,6 +602,10 @@
 -   **Biometric Authentication**: Fingerprint and face recognition
 -   **Mobile-optimized UI**: Touch-friendly interface design
 -   **App Store Distribution**: Native iOS and Android app availability
+-   **Mobile Time Tracking**: Quick clock-in/out with location verification
+-   **Mobile Expense Entry**: Photo capture and OCR for expense receipts
+-   **Mobile Approvals**: Quick approval workflows for managers
+-   **Mobile Directory**: Employee contact information and org chart
 
 #### Progressive Web App
 
@@ -297,6 +615,17 @@
 -   **Background Tasks**: Offline data processing
 -   **Device APIs**: Access to device features via web APIs
 -   **Performance Optimization**: Lazy loading and code splitting
+
+#### Mobile-Specific HR Features
+
+-   **Mobile Onboarding**: New hire document submission and e-signatures
+-   **Mobile Learning**: Training modules optimized for mobile consumption
+-   **Mobile Surveys**: Quick pulse surveys and feedback collection
+-   **Mobile Recognition**: Peer recognition and appreciation on-the-go
+-   **Mobile Scheduling**: Shift scheduling and availability management
+-   **Emergency Contacts**: Quick access to emergency information
+-   **Mobile Payroll**: Pay stub access and payroll information
+-   **Mobile Benefits**: Benefits information and enrollment
 
 ## Security Implementation
 
@@ -434,64 +763,157 @@
 
 ## Implementation Timeline
 
-### Phase 1: Core Foundation (Months 1-2)
+### Phase 1: Foundation & Core Setup (Months 1-2)
 
--   Authentication and authorization system
--   Basic user management and RBAC
--   Database setup and core API endpoints
--   Basic UI components and navigation
+-   Authentication system with JWT and role-based access
+-   User management and organizational structure
+-   Database setup with Prisma ORM and PostgreSQL
+-   Basic UI components and responsive design
+-   Employee information management
+-   Department and team structure setup
 
-### Phase 2: Project Management (Months 3-4)
+### Phase 2: Essential HRMS Features (Months 3-4)
+
+-   Employee onboarding and profile management
+-   Attendance tracking with clock-in/out functionality
+-   Leave management with approval workflows
+-   Basic time tracking and timesheet management
+-   Employee self-service portal
+-   Document storage and management
+
+### Phase 3: Project Management Core (Months 5-6)
 
 -   Task management with Kanban boards
--   Time tracking functionality
--   Basic reporting and analytics
--   GitHub integration setup
+-   Project creation and team assignment
+-   Basic Gantt charts and timeline visualization
+-   File sharing and collaboration tools
+-   Time tracking integration with projects
+-   Basic reporting and dashboards
 
-### Phase 3: HR Features (Months 5-6)
+### Phase 4: Payroll & Financial Management (Months 7-8)
 
--   Attendance tracking system
--   Leave management implementation
--   Expense management system
--   Advanced reporting dashboard
+-   Built-in payroll processing system
+-   Salary structure and component management
+-   Tax calculation and statutory compliance
+-   Expense management and reimbursements
+-   Payslip generation and employee access
+-   Basic financial reporting
 
-### Phase 4: Advanced Features (Months 7-8)
+### Phase 5: Advanced Features & Integration (Months 9-10)
 
--   Documentation system
--   Advanced integrations (Teams, Outlook)
--   Mobile app development
--   AI-powered features
+-   Performance management and reviews
+-   Basic recruitment and job posting
+-   Learning management and training tracking
+-   Mobile-responsive design optimization
+-   Essential third-party integrations (email, calendar)
+-   Advanced reporting and analytics
 
-### Phase 5: Polish & Launch (Months 9-10)
+### Phase 6: Testing & Deployment (Months 11-12)
 
--   Performance optimization
--   Security hardening
--   User acceptance testing
--   Production deployment
+-   Comprehensive testing and bug fixes
+-   User acceptance testing with pilot group
+-   Security auditing and compliance checks
+-   Production deployment and monitoring
+-   User training and documentation
+-   Go-live support and optimization
 
 ## Budget Considerations
 
 ### Development Costs
 
--   **Frontend Development**: $120,000 - $150,000
--   **Backend Development**: $100,000 - $130,000
--   **Database Design**: $20,000 - $30,000
--   **Integration Development**: $40,000 - $60,000
--   **Testing & QA**: $30,000 - $40,000
+-   **Frontend Development**: $80,000 - $100,000
+-   **Backend Development**: $70,000 - $90,000
+-   **Database Design & Setup**: $15,000 - $25,000
+-   **HRMS Core Features**: $60,000 - $80,000
+-   **Built-in Payroll System**: $40,000 - $60,000
+-   **Project Management Features**: $35,000 - $50,000
+-   **Essential Integrations**: $25,000 - $35,000
+-   **Mobile Optimization**: $20,000 - $30,000
+-   **Testing & QA**: $25,000 - $35,000
+-   **Security & Compliance**: $15,000 - $25,000
+-   **Documentation & Training**: $10,000 - $15,000
+
+**Total Development Cost**: $395,000 - $545,000
 
 ### Infrastructure Costs (Monthly)
 
--   **Supabase Pro**: $25/month + usage
--   **Vercel Pro**: $20/month + usage
--   **CDN & Storage**: $50-200/month
--   **Third-party APIs**: $100-500/month
+-   **Database Hosting**: $50-150/month
+-   **Application Hosting**: $100-250/month
+-   **Redis Cache**: $25-75/month
+-   **File Storage & CDN**: $50-150/month
+-   **Email Services**: $25-75/month
+-   **Backup & Security**: $50-100/month
 -   **Monitoring Tools**: $50-100/month
 
-### Ongoing Costs
+**Total Infrastructure Cost**: $350-900/month
 
--   **Maintenance**: $5,000-10,000/month
--   **Feature Updates**: $10,000-15,000/month
--   **Support**: $3,000-5,000/month
--   **Compliance**: $2,000-5,000/month
+### Essential Service Costs (Annual)
 
-This comprehensive specification provides a production-ready roadmap for developing a world-class project management and employee tracking application with advanced expense management capabilities. The modular architecture ensures scalability while maintaining excellent user experience across all features.
+-   **Email Service (SMTP)**: $500-1,500/year
+-   **File Storage**: $1,000-3,000/year
+-   **SSL Certificates**: $200-500/year
+-   **Backup Services**: $1,000-2,500/year
+-   **Security Monitoring**: $2,000-5,000/year
+
+**Total Service Costs**: $4,700-12,500/year
+
+### Ongoing Costs (Monthly)
+
+-   **Maintenance & Bug Fixes**: $5,000-8,000/month
+-   **Feature Updates**: $8,000-12,000/month
+-   **Customer Support**: $3,000-5,000/month
+-   **Infrastructure Management**: $2,000-3,000/month
+-   **Security Updates**: $1,000-2,000/month
+
+**Total Ongoing Costs**: $19,000-30,000/month
+
+### Target Market & Pricing
+
+#### Primary Target: Mid-size Companies (50-200 employees)
+
+-   **Market Size**: ~500,000 companies globally
+-   **Pain Points**: Manual HR processes, disconnected tools, payroll complexity
+-   **Budget Range**: $5,000-25,000/month for HR and project management tools
+
+#### Pricing Strategy
+
+-   **Starter Plan**: $15-25 per employee per month (Basic HRMS + Projects)
+-   **Professional Plan**: $25-35 per employee per month (Full HRMS + Built-in Payroll)
+-   **Enterprise Plan**: $35-50 per employee per month (Advanced features + Priority support)
+
+#### Revenue Projections (200-employee company)
+
+-   **Starter Plan**: $3,000-5,000/month
+-   **Professional Plan**: $5,000-7,000/month
+-   **Enterprise Plan**: $7,000-10,000/month
+
+### ROI for Target Companies
+
+#### Cost Savings
+
+-   **HR Administrative Time**: 50% reduction (saves ~$2,000-4,000/month)
+-   **Payroll Processing**: 80% reduction (saves ~$1,500-3,000/month)
+-   **Project Management Efficiency**: 30% improvement (saves ~$3,000-5,000/month)
+-   **Compliance & Audit**: 60% reduction (saves ~$1,000-2,000/month)
+
+**Total Monthly Savings**: $7,500-14,000/month
+
+#### Break-even Analysis
+
+For a 200-employee company using Professional Plan ($5,000-7,000/month):
+- **Payback Period**: 2-4 months
+- **Annual ROI**: 300-400%
+
+### Competitive Advantage
+
+#### vs. BambooHR + Monday.com (separate tools)
+-   **Cost Savings**: 40-50% lower than using separate tools
+-   **Integration Benefits**: No data silos, unified reporting
+-   **Built-in Payroll**: No additional payroll service fees
+
+#### vs. Workday (enterprise solution)
+-   **Cost Savings**: 70-80% lower implementation and monthly costs
+-   **Simplicity**: Faster deployment, easier to use
+-   **Right-sized Features**: No overwhelming complexity
+
+This focused specification provides a practical roadmap for developing an integrated HRMS and project management platform specifically designed for mid-size companies. The built-in payroll system eliminates the need for external integrations while keeping costs reasonable and features manageable.
